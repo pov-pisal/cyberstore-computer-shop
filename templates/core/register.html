@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Account | CYBERSTORE Computer Shop{% endblock %}
+
+{% block content %}
+<div class="glass-card auth-layout" style="max-width: 550px;">
+    <div class="auth-header">
+        <h1>Create Account</h1>
+        <p>Register to place orders and manage your profiles.</p>
+    </div>
+    
+    <form method="POST" action="{% url 'register' %}">
+        {% csrf_token %}
+        
+        <div class="form-grid">
+            <div class="form-group form-group-full">
+                <label for="username">Username *</label>
+                <input type="text" id="username" name="username" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="text" id="phone" name="phone" class="form-input">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <input type="password" id="password" name="password" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password *</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-input" required>
+            </div>
+            
+            <div class="form-group form-group-full">
+                <label for="address">Default Address</label>
+                <textarea id="address" name="address" class="form-input" rows="2" style="resize: none;"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" id="city" name="city" class="form-input" value="Phnom Penh">
+            </div>
+            
+            <div class="form-group">
+                <label for="country">Country</label>
+                <input type="text" id="country" name="country" class="form-input" value="Cambodia">
+            </div>
+        </div>
+        
+        <div style="margin-top: 24px;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 15px;">
+                Create Account
+            </button>
+        </div>
+    </form>
+    
+    <div class="auth-footer">
+        Already have an account? <a href="{% url 'login' %}">Log In</a>
+    </div>
+</div>
+{% endblock %}

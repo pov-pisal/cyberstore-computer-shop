@@ -1,0 +1,161 @@
+from django.test import TestCase, Client
+from django.urls import reverse
+from django.contrib.auth.models import User
+from .models import Category, Product, Cart, CartItem, Order, OrderItem
+
+class ComputerShopTests(TestCase):
+    def setUp(self):
+        # Set up a category and a product
+        self.category = Category.objects.create(name="Test Category", slug="test-category")
+        self.product = Product.objects.create(
+            category=self.category,
+            name="Test CPU",
+            slug="test-cpu",
+            sku="CPU-TST-01",
+            description="A test central processing unit.",
+            price=150.00,
+            stock=10
+        )
+        self.client = Client()
+
+    def test_product_creation(self):
+        self.assertEqual(self.product.name, "Test CPU")
+        self.assertEqual(self.product.get_image_url, "/static/images/placeholder.svg")
+
+    def test_cart_totals(self):
+        cart = Cart.objects.create()
+        item = CartItem.objects.create(cart=cart, product=self.product, quantity=2)
+        
+        self.assertEqual(cart.get_total_items, 2)
+        self.assertEqual(cart.get_total_price, 300.00)
+
+    def test_catalog_view(self):
+        response = self.client.get(reverse('catalog'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Test CPU")
+
+    def test_catalog_json_view(self):
+        response = self.client.get(reverse('catalog_json') + "?q=Test")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data['products']), 1)
+        self.assertEqual(data['products'][0]['name'], "Test CPU")
+
+    def test_order_placement(self):
+        cart = Cart.objects.create()
+        CartItem.objects.create(cart=cart, product=self.product, quantity=1)
+        
+        # We manually store cart in session to bypass view helper or test checkout POST
+        # For simplicity, let's verify Order creation directly
+        order = Order.objects.create(
+            full_name="John Doe",
+            email="john@example.com",
+            phone="12345678",
+            address="123 Test St",
+            city="Phnom Penh",
+            total_amount=150.00
+        )
+        OrderItem.objects.create(order=order, product=self.product, price=self.product.price, quantity=1)
+        
+        self.assertEqual(order.items.count(), 1)
+        self.assertEqual(order.total_amount, 150.00)
+
+    def test_brand_filtering(self):
+        self.product.brand = "Intel"
+        self.product.save()
+        
+        response = self.client.get(reverse('catalog_json') + "?brand=Intel")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data['products']), 1)
+        self.assertEqual(data['products'][0]['brand'], "Intel")
+        
+        response_empty = self.client.get(reverse('catalog_json') + "?brand=AMD")
+        self.assertEqual(response_empty.status_code, 200)
+        data_empty = response_empty.json()
+        self.assertEqual(len(data_empty['products']), 0)
+
+    def test_add_product_authorization(self):
+        response = self.client.post(reverse('add_product'), {
+            'name': 'Test New CPU',
+            'brand': 'AMD',
+            'sku': 'NEW-AMD-CPU',
+            'category': self.category.id,
+            'price': '299.00',
+            'stock': '10',
+            'description': 'A new AMD processor.'
+        })
+        self.assertRedirects(response, reverse('home'))
+        
+        user = User.objects.create_user(username='normaluser', password='password123')
+        self.client.login(username='normaluser', password='password123')
+        response = self.client.post(reverse('add_product'), {
+            'name': 'Test New CPU',
+            'brand': 'AMD',
+            'sku': 'NEW-AMD-CPU',
+            'category': self.category.id,
+            'price': '299.00',
+            'stock': '10',
+            'description': 'A new AMD processor.'
+        })
+        self.assertRedirects(response, reverse('home'))
+        
+        manager = User.objects.create_user(username='manageruser', password='password123')
+        profile = manager.profile
+        profile.is_manager = True
+        profile.save()
+        
+        self.client.login(username='manageruser', password='password123')
+        response = self.client.post(reverse('add_product'), {
+            'name': 'Test New CPU',
+            'brand': 'AMD',
+            'sku': 'NEW-AMD-CPU',
+            'category': self.category.id,
+            'price': '299.00',
+            'stock': '10',
+            'description': 'A new AMD processor.',
+            'specifications': '{"Cores": "8"}'
+        })
+        self.assertRedirects(response, '/dashboard/?tab=products')
+        self.assertTrue(Product.objects.filter(sku='NEW-AMD-CPU').exists())
+
+    def test_coupon_application(self):
+        from .models import Coupon
+        coupon = Coupon.objects.create(code="CYBER10", discount_percent=10, is_active=True)
+        
+        user = User.objects.create_user(username='testuser', password='password123')
+        self.client.login(username='testuser', password='password123')
+        user_cart, _ = Cart.objects.get_or_create(user=user)
+        CartItem.objects.create(cart=user_cart, product=self.product, quantity=2) # 2 * 150 = 300
+        
+        response = self.client.post(
+            reverse('apply_coupon'),
+            data='{"code": "CYBER10"}',
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['code'], 'CYBER10')
+        self.assertEqual(float(data['discount_amount']), 30.00)
+        self.assertEqual(float(data['new_total']), 270.00)
+
+    def test_product_reviews(self):
+        from .models import Review
+        user = User.objects.create_user(username='reviewer', password='password123')
+        self.client.login(username='reviewer', password='password123')
+        
+        response = self.client.post(reverse('add_review'), {
+            'product_id': self.product.id,
+            'rating': 4,
+            'comment': 'Good processor but runs a bit warm.'
+        })
+        self.assertRedirects(response, reverse('product_detail', kwargs={'slug': self.product.slug}))
+        
+        self.assertEqual(Review.objects.count(), 1)
+        review = Review.objects.first()
+        self.assertEqual(review.rating, 4)
+        self.assertEqual(review.comment, 'Good processor but runs a bit warm.')
+        self.assertEqual(self.product.average_rating, 4.0)
+        self.assertEqual(self.product.review_count, 1)
+

@@ -1,0 +1,31 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('catalog/', views.catalog, name='catalog'),
+    path('catalog/json/', views.catalog_json, name='catalog_json'),
+    path('product/<slug:slug>/', views.product_detail, name='product_detail'),
+    path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
+    path('logout/', views.logout_view, name='logout'),
+    path('cart/data/', views.cart_data, name='cart_data'),
+    path('cart/add/', views.cart_add, name='cart_add'),
+    path('cart/update/', views.cart_update, name='cart_update'),
+    path('cart/remove/', views.cart_remove, name='cart_remove'),
+    path('checkout/', views.checkout, name='checkout'),
+    path('checkout/success/<int:order_id>/', views.checkout_success, name='checkout_success'),
+    path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('dashboard/order/<int:order_id>/update/', views.update_order_status, name='update_order_status'),
+    path('dashboard/product/add/', views.add_product, name='add_product'),
+    path('dashboard/product/<int:product_id>/edit/', views.edit_product, name='edit_product'),
+    path('dashboard/product/<int:product_id>/delete/', views.delete_product, name='delete_product'),
+    path('dashboard/category/add/', views.add_category, name='add_category'),
+    path('dashboard/category/<int:category_id>/edit/', views.edit_category, name='edit_category'),
+    path('dashboard/category/<int:category_id>/delete/', views.delete_category, name='delete_category'),
+    path('dashboard/user/<int:user_id>/toggle-role/', views.toggle_user_role, name='toggle_user_role'),
+    path('dashboard/user/add/', views.add_user, name='add_user'),
+    path('dashboard/cart/<int:cart_id>/delete/', views.delete_cart, name='delete_cart'),
+    path('coupon/apply/', views.apply_coupon, name='apply_coupon'),
+    path('review/add/', views.add_review, name='add_review'),
+]

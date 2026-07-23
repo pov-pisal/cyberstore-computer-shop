@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} | CYBERSTORE Computer Shop{% endblock %}
+
+{% block content %}
+<div class="detail-container" style="max-width: 1300px; margin: 0 auto; padding: 0 15px;">
+    
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb-nav" style="margin-bottom: 24px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+        <a href="{% url 'home' %}" style="color: var(--text-secondary); text-decoration: none;"><i class="fa fa-home"></i></a>
+        <span style="color: var(--text-muted);">&gt;</span>
+        <a href="{% url 'catalog' %}" style="color: var(--text-secondary); text-decoration: none;">Catalog</a>
+        <span style="color: var(--text-muted);">&gt;</span>
+        <a href="{% url 'catalog' %}?category={{ product.category.slug }}" style="color: var(--text-secondary); text-decoration: none;">{{ product.category.name }}</a>
+        <span style="color: var(--text-muted);">&gt;</span>
+        <span style="color: #16a34a; font-weight: 600;">{{ product.name }}</span>
+    </div>
+
+    <!-- Product Profile Panel -->
+    <div class="detail-layout" style="display: grid; grid-template-columns: 1fr 1.1fr; gap: 40px; align-items: start; margin-bottom: 40px;">
+        <!-- Left Column: Product Image -->
+        <div style="background: #ffffff; border: 1px solid var(--glass-border); border-radius: var(--border-radius-sm); padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+                {% if product.brand %}
+                    <span style="font-size: 24px; font-weight: 900; color: #16a34a; font-family: 'Outfit', sans-serif; font-style: italic; letter-spacing: -1px; text-transform: lowercase;">{{ product.brand }}<span style="font-size:12px; font-weight:700; color:#3b82f6; vertical-align:super; margin-left:4px; font-style:normal;">explore beyond limits</span></span>
+                {% endif %}
+            </div>
+            
+            <div class="detail-img-container" style="text-align: center; margin-bottom: 24px; padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 300px;">
+                <img src="{{ product.get_image_url }}" alt="{{ product.name }}" class="detail-img" style="max-height: 350px; max-width: 100%; object-fit: contain; transition: transform 0.5s ease;">
+            </div>
+            
+            <!-- Thumbnail Selectors row -->
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <div style="width: 80px; height: 60px; border: 2.5px solid #111827; border-radius: 4px; padding: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #ffffff;">
+                    <img src="{{ product.get_image_url }}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                </div>
+                <div style="width: 80px; height: 60px; border: 1.5px solid #d1d5db; border-radius: 4px; padding: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #ffffff; opacity: 0.7;">
+                    <img src="{{ product.get_image_url }}" style="max-height: 100%; max-width: 100%; object-fit: contain; transform: scaleX(-1);">
+                </div>
+                <div style="width: 80px; height: 60px; border: 1.5px solid #d1d5db; border-radius: 4px; padding: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #ffffff; opacity: 0.7;">
+                    <img src="{{ product.get_image_url }}" style="max-height: 100%; max-width: 100%; object-fit: contain; transform: rotate(15deg);">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column: Product Info -->
+        <div style="background: #ffffff; border: 1px solid var(--glass-border); border-radius: var(--border-radius-sm); padding: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+            <h1 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin: 0 0 10px 0; line-height: 1.4; font-family: 'Outfit', sans-serif;">{{ product.name }}</h1>
+            
+            <!-- Ratings and stock remains row -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 6px; color: #fbbf24; font-size: 13.5px;">
+                    <span>★★★★★</span>
+                    <span style="color: var(--text-muted); font-size: 12px; font-weight: 600;">{{ product.review_count }} reviews</span>
+                </div>
+                <div style="color: #ea580c; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa fa-fire"></i> 0 sold. Only {{ product.stock }} remain
+                </div>
+            </div>
+            
+            <!-- Price Block -->
+            <div style="margin-bottom: 24px;">
+                <div style="font-size: 32px; font-weight: 800; color: var(--text-primary);">${{ product.price }}</div>
+                <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 4px;">Ex Tax: ${{ product.price }}</div>
+            </div>
+            
+            <!-- Details List table -->
+            <div style="margin-bottom: 24px; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; padding: 16px 0;">
+                <div style="display: flex; margin-bottom: 10px; font-size: 13.5px;">
+                    <span style="width: 140px; color: var(--text-muted); font-weight: 600;">Brand:</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ product.brand|default:"Generic" }}</span>
+                </div>
+                <div style="display: flex; margin-bottom: 10px; font-size: 13.5px;">
+                    <span style="width: 140px; color: var(--text-muted); font-weight: 600;">Product Code:</span>
+                    <span style="color: var(--text-primary); font-weight: 600;">{{ product.sku }}</span>
+                </div>
+                <div style="display: flex; font-size: 13.5px;">
+                    <span style="width: 140px; color: var(--text-muted); font-weight: 600;">Stock:</span>
+                    {% if product.stock > 0 %}
+                        <span style="color: #16a34a; font-weight: 700;"><i class="fa fa-check-square"></i> In Stock</span>
+                    {% else %}
+                        <span style="color: #dc2626; font-weight: 700;"><i class="fa fa-window-close"></i> Out of Stock</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quantity controls -->
+            <div style="margin-bottom: 28px;">
+                <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Qty</label>
+                <div style="display: flex; align-items: center; border: 1.5px solid #d1d5db; width: 110px; border-radius: 4px; background: #ffffff;">
+                    <button id="btn-qty-minus" style="width: 32px; height: 32px; border: none; background: none; color: #475569; font-weight: 700; cursor: pointer; transition: var(--transition-smooth);" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">-</button>
+                    <input type="text" id="qty-input" value="1" readonly style="width: 42px; height: 32px; border: none; text-align: center; font-weight: 800; font-size: 14px; background: none; color: var(--text-primary);">
+                    <button id="btn-qty-plus" style="width: 32px; height: 32px; border: none; background: none; color: #475569; font-weight: 700; cursor: pointer; transition: var(--transition-smooth);" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">+</button>
+                </div>
+            </div>
+            
+            <!-- Actions buttons row -->
+            <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                {% if product.stock > 0 %}
+                    <button class="btn" style="flex-grow: 1; padding: 14px; font-size: 13.5px; font-weight: 800; background: #16a34a; border: 1px solid #16a34a; color: white; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; transition: var(--transition-smooth); cursor: pointer;" onmouseover="this.style.background='#15803d'; this.style.borderColor='#15803d';" onmouseout="this.style.background='#16a34a'; this.style.borderColor='#16a34a';" onclick="addToCart({{ product.id }}, parseInt(document.getElementById('qty-input').value))">Add to Cart</button>
+                    <button class="btn" style="flex-grow: 1; padding: 14px; font-size: 13.5px; font-weight: 800; background: #a2d600; border: 1px solid #a2d600; color: white; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; display: block; transition: var(--transition-smooth); cursor: pointer;" onmouseover="this.style.background='#8bb700'; this.style.borderColor='#8bb700';" onmouseout="this.style.background='#a2d600'; this.style.borderColor='#a2d600';" onclick="addToCart({{ product.id }}, parseInt(document.getElementById('qty-input').value)); window.location.href='{% url 'checkout' %}';">Buy Now</button>
+                {% else %}
+                    <button class="btn btn-secondary" style="flex-grow: 1; padding: 14px;" disabled>Sold Out</button>
+                {% endif %}
+            </div>
+            
+            <!-- Wishlist & Compare triggers links -->
+            <div style="display: flex; gap: 24px; font-size: 12.5px; font-weight: 700; color: #475569; margin-bottom: 28px; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 16px;">
+                <span style="cursor: pointer; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#16a34a';" onmouseout="this.style.color='#475569';"><i class="fa fa-heart" style="color: #94a3b8;"></i> Add to Wishlist</span>
+                <span style="cursor: pointer; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#16a34a';" onmouseout="this.style.color='#475569';"><i class="fa fa-exchange-alt" style="color: #94a3b8;"></i> Add to Compare</span>
+            </div>
+            
+            <!-- Share block -->
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 11.5px; font-weight: 800; color: var(--text-primary); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Share This</label>
+                <div style="display: flex; gap: 8px;">
+                    <a href="#" style="background: #f1f5f9; color: #475569; border-radius: 4px; padding: 6px 12px; font-size: 12px; font-weight: 700; text-decoration: none;"><i class="fab fa-facebook-f" style="margin-right: 6px;"></i> Share</a>
+                    <a href="#" style="background: #f1f5f9; color: #475569; border-radius: 4px; padding: 6px 12px; font-size: 12px; font-weight: 700; text-decoration: none;"><i class="fab fa-telegram" style="margin-right: 6px;"></i> Telegram</a>
+                </div>
+            </div>
+            
+            <!-- Tags Box -->
+            <div>
+                <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Tags:</label>
+                <div style="background: #f1f5f9; border-radius: 4px; padding: 8px 12px; font-size: 11.5px; color: #475569; font-weight: 600; line-height: 1.5; text-transform: uppercase;">
+                    {{ product.name }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products Section -->
+    <section style="margin-top: 60px; padding: 40px 0; border-top: 1px solid var(--glass-border);">
+        <h2 style="font-size: 26px; font-weight: 800; margin-bottom: 30px;">Related <span>Products</span></h2>
+        <div class="products-grid">
+            {% for prod in related_products %}
+                <div class="glass-card product-card">
+                    <div class="product-img-wrapper">
+                        <span class="product-category-tag">{{ prod.category.name }}</span>
+                        <img src="{{ prod.get_image_url }}" alt="{{ prod.name }}" class="product-img">
+                    </div>
+                    <div class="product-info">
+                        <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 8px;">
+                            <span style="color: #fbbf24; font-size: 12px;">★</span>
+                            <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">{{ prod.average_rating }}</span>
+                        </div>
+                        <a href="{% url 'product_detail' prod.slug %}">
+                            <h3 class="product-title" style="font-size: 16px;">{{ prod.name }}</h3>
+                        </a>
+                        <div class="product-footer">
+                            <span class="product-price">${{ prod.price }}</span>
+                            {% if prod.stock > 0 %}
+                                <button class="btn btn-primary" onclick="addToCart({{ prod.id }})">Add to Cart</button>
+                            {% else %}
+                                <button class="btn btn-secondary" disabled>Out of Stock</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 20px 0;">
+                    <p>No other products in this category.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Reviews & Ratings Section -->
+    <section style="margin-top: 40px; padding: 40px 0; border-top: 1px solid var(--glass-border);">
+        <h2 style="font-size: 26px; font-weight: 800; margin-bottom: 30px;">Customer <span>Reviews</span></h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 40px; align-items: start;">
+            <!-- Review summary / stats -->
+            <div class="glass-card" style="padding: 30px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px;">Average Rating</h3>
+                <span style="font-size: 54px; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 8px;">{{ product.average_rating }}</span>
+                <div class="star-rating" style="display: flex; color: #fbbf24; margin-bottom: 12px; gap: 4px;">
+                    {% with ''|center:5 as range %}
+                    {% for _ in range %}
+                        {% if forloop.counter <= product.average_rating %}
+                            <span style="font-size: 20px;">★</span>
+                        {% else %}
+                            <span style="color: rgba(255,255,255,0.15); font-size: 20px;">★</span>
+                        {% endif %}
+                    {% endfor %}
+                    {% endwith %}
+                </div>
+                <p style="color: var(--text-secondary); font-size: 14px; margin: 0;">Based on {{ product.review_count }} client feedback reviews.</p>
+            </div>
+
+            <!-- Review list & Submit review form -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                <!-- Submit review (if logged in and not already reviewed) -->
+                {% if user.is_authenticated %}
+                    {% if not has_reviewed %}
+                        <div class="glass-card" style="padding: 30px;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">Write a Review</h3>
+                            <form method="POST" action="{% url 'add_review' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="product_id" value="{{ product.id }}">
+                                <div style="margin-bottom: 16px;">
+                                    <label style="display: block; color: var(--text-secondary); font-size: 14px; font-weight: 600; margin-bottom: 8px;">Rating Selection</label>
+                                    <select name="rating" class="form-input" style="background: var(--bg-secondary); max-width: 150px;" required>
+                                        <option value="5">★★★★★ (5 Stars)</option>
+                                        <option value="4">★★★★☆ (4 Stars)</option>
+                                        <option value="3">★★★☆☆ (3 Stars)</option>
+                                        <option value="2">★★☆☆☆ (2 Stars)</option>
+                                        <option value="1">★☆☆☆☆ (1 Star)</option>
+                                    </select>
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <label style="display: block; color: var(--text-secondary); font-size: 14px; font-weight: 600; margin-bottom: 8px;">Your Comment</label>
+                                    <textarea name="comment" class="form-input" rows="4" required placeholder="Tell other customers about your experience with this hardware..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-size: 14px;">Submit Review</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="glass-card" style="padding: 20px 30px; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.02);">
+                            <p style="color: var(--accent-emerald); font-size: 14px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                You have already submitted a review for this product. Thank you!
+                            </p>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="glass-card" style="padding: 20px 30px; text-align: center; border-color: rgba(99, 102, 241, 0.2);">
+                        <p style="color: var(--text-secondary); font-size: 14px; margin: 0;">
+                            Please <a href="{% url 'login' %}?next={{ request.path }}" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">Login</a> to post a product review.
+                        </p>
+                    </div>
+                {% endif %}
+
+                <!-- List reviews -->
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary); border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; margin-bottom: 4px;">Reviews Feedback</h3>
+                    {% for r in reviews %}
+                        <div class="glass-card" style="padding: 20px 24px; position: relative;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <strong style="color: var(--text-primary); font-size: 15px;">{{ r.user.first_name }} {{ r.user.last_name|default:"" }}</strong>
+                                    <span style="color: var(--text-muted); font-size: 12px;">@{{ r.user.username }}</span>
+                                </div>
+                                <span style="color: var(--text-muted); font-size: 12px;">{{ r.created_at|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="star-rating" style="display: flex; color: #fbbf24; margin-bottom: 10px;">
+                                {% with ''|center:5 as range %}
+                                {% for _ in range %}
+                                    {% if forloop.counter <= r.rating %}
+                                        <span style="font-size: 14px;">★</span>
+                                    {% else %}
+                                        <span style="color: rgba(255,255,255,0.15); font-size: 14px;">★</span>
+                                    {% endif %}
+                                {% endfor %}
+                                {% endwith %}
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 14.5px; line-height: 1.5; margin: 0;">{{ r.comment }}</p>
+                        </div>
+                    {% empty %}
+                        <div class="glass-card" style="padding: 40px; text-align: center; color: var(--text-muted);">
+                            <p style="margin: 0; font-size: 14px;">No reviews submitted yet for this product. Be the first to share your thoughts!</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const qtyInput = document.getElementById('qty-input');
+    const btnPlus = document.getElementById('btn-qty-plus');
+    const btnMinus = document.getElementById('btn-qty-minus');
+    const maxStock = parseInt("{{ product.stock }}") || 1;
+    
+    if (qtyInput && btnPlus && btnMinus) {
+        btnPlus.addEventListener('click', () => {
+            let val = parseInt(qtyInput.value) || 1;
+            if (val < maxStock) {
+                qtyInput.value = val + 1;
+            }
+        });
+        
+        btnMinus.addEventListener('click', () => {
+            let val = parseInt(qtyInput.value) || 1;
+            if (val > 1) {
+                qtyInput.value = val - 1;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

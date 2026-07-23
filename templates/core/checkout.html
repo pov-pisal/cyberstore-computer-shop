@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout | CYBERSTORE Computer Shop{% endblock %}
+
+{% block content %}
+<div class="checkout-layout" style="padding: 40px 0;">
+    
+    <!-- Left Column: Shipping & Billing Form -->
+    <div class="glass-card checkout-form-section" style="padding: 30px;">
+        <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 24px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">Billing & Shipping Information</h2>
+        
+        <form method="POST" action="{% url 'checkout' %}">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group form-group-full">
+                    <label for="full_name">Full Name *</label>
+                    <input type="text" id="full_name" name="full_name" class="form-input" required 
+                           value="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% endif %}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" class="form-input" required 
+                           value="{% if user.is_authenticated %}{{ user.email }}{% endif %}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="text" id="phone" name="phone" class="form-input" required
+                           value="{% if user.is_authenticated %}{{ user.profile.phone }}{% endif %}">
+                </div>
+                
+                <div class="form-group form-group-full">
+                    <label for="address">Delivery Address *</label>
+                    <textarea id="address" name="address" class="form-input" rows="3" required style="resize: none;">{% if user.is_authenticated %}{{ user.profile.address }}{% endif %}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="city">City *</label>
+                    <input type="text" id="city" name="city" class="form-input" required
+                           value="{% if user.is_authenticated %}{{ user.profile.city|default:'Phnom Penh' }}{% else %}Phnom Penh{% endif %}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="country">Country *</label>
+                    <input type="text" id="country" name="country" class="form-input" required
+                           value="{% if user.is_authenticated %}{{ user.profile.country|default:'Cambodia' }}{% else %}Cambodia{% endif %}">
+                </div>
+            </div>
+            
+            <div style="margin-top: 32px;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 16px;">
+                    Place Order (COD - Cash on Delivery)
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Right Column: Order Summary -->
+    <div class="glass-card order-summary-section" style="padding: 30px; height: fit-content;">
+        <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 24px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">Order Summary</h2>
+        
+        <div class="summary-list" style="margin-bottom: 20px;">
+            {% for item in cart.items.all %}
+                <div class="summary-item" style="border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-weight: 600; color: white; font-size: 14.5px;">{{ item.product.name }}</span>
+                        <br>
+                        <span style="font-size: 12px; color: var(--text-muted);">Qty: {{ item.quantity }}</span>
+                    </div>
+                    <span style="font-weight: 600;">${{ item.get_cost }}</span>
+                </div>
+            {% empty %}
+                <div style="text-align: center; padding: 20px 0; color: var(--text-secondary);">
+                    Your cart is empty.
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="summary-item" style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14.5px; color: var(--text-secondary);">
+            <span>Subtotal</span>
+            <span>${{ cart.get_total_price }}</span>
+        </div>
+        
+        <div class="summary-item" style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14.5px; color: var(--text-secondary);">
+            <span>Delivery Fee</span>
+            <span style="color: var(--accent-emerald); font-weight: 600;">FREE</span>
+        </div>
+
+        <!-- Dynamic discount deduction row -->
+        <div class="summary-item" id="discount-row" style="display: none; justify-content: space-between; margin-bottom: 10px; font-size: 14.5px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px; margin-top: 10px;">
+            <span>Discount (<span id="discount-percent-val">0</span>%)</span>
+            <span style="color: var(--accent-rose); font-weight: 600;">- $<span id="discount-amount-val">0.00</span></span>
+        </div>
+        
+        <div class="summary-total" style="display: flex; justify-content: space-between; border-top: 1px solid var(--glass-border); padding-top: 14px; margin-top: 14px; font-size: 18px; font-weight: 800; color: white;">
+            <span>Total</span>
+            <span style="color: var(--accent-cyan);">${{ cart.get_total_price }}</span>
+        </div>
+
+        <!-- Promo Code Input Form -->
+        <div class="promo-box" style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="coupon-code-input" class="form-input" placeholder="Promo Code (e.g. CYBERGPU)" style="font-size: 13px; padding: 10px; text-transform: uppercase;">
+                <button type="button" id="apply-coupon-btn" class="btn btn-primary" style="padding: 10px 16px; font-size: 13px; flex-shrink: 0;">Apply</button>
+            </div>
+            <div id="coupon-message" style="font-size: 12.5px; margin-top: 8px; font-weight: 600; display: none;"></div>
+        </div>
+        
+        <div style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 24px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            Secure checkout connection.
+        </div>
+    </div>
+    
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const applyBtn = document.getElementById('apply-coupon-btn');
+        const codeInput = document.getElementById('coupon-code-input');
+        const couponMsg = document.getElementById('coupon-message');
+        const discountRow = document.getElementById('discount-row');
+        const discountPercentVal = document.getElementById('discount-percent-val');
+        const discountAmountVal = document.getElementById('discount-amount-val');
+        const totalVal = document.querySelector('.summary-total span:last-child');
+        
+        if (applyBtn && codeInput) {
+            applyBtn.addEventListener('click', () => {
+                const code = codeInput.value.trim();
+                if (!code) {
+                    showCouponMessage('Please enter a coupon code.', 'var(--accent-rose)');
+                    return;
+                }
+                
+                fetch("{% url 'apply_coupon' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ code: code })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showCouponMessage(data.message, 'var(--accent-emerald)');
+                        
+                        // Update UI summary details
+                        discountPercentVal.innerText = data.discount_percent;
+                        discountAmountVal.innerText = parseFloat(data.discount_amount).toFixed(2);
+                        discountRow.style.display = 'flex';
+                        totalVal.innerText = '$' + parseFloat(data.new_total).toFixed(2);
+                        
+                        codeInput.disabled = true;
+                        applyBtn.disabled = true;
+                        applyBtn.style.opacity = '0.5';
+                    } else {
+                        showCouponMessage(data.error, 'var(--accent-rose)');
+                    }
+                })
+                .catch(err => {
+                    showCouponMessage('Error applying promo code. Please try again.', 'var(--accent-rose)');
+                });
+            });
+        }
+        
+        function showCouponMessage(msg, color) {
+            couponMsg.innerText = msg;
+            couponMsg.style.color = color;
+            couponMsg.style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}

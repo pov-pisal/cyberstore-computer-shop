@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}V-Tech Computer CYBERSTORE{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- V-Tech Style Header Redesign -->
+    <header class="site-header" style="background: #ffffff; border-bottom: 1px solid var(--glass-border);">
+        
+        <!-- Tier 1: Top Utility Bar -->
+        <div class="top-bar" style="background: #0d2137; padding: 8px 0; color: rgba(255,255,255,0.8); font-size: 12.5px;">
+            <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="top-bar-left" style="display: flex; gap: 20px;">
+                    <span><i class="fa fa-phone" style="color: #fbbf24; margin-right: 6px;"></i>Hotline: <strong>012 393 395</strong> / <strong>098 393 395</strong></span>
+                    <span class="hidden-mobile"><i class="fa fa-map-marker-alt" style="color: #fbbf24; margin-right: 6px;"></i>Kampuchea Krom Blvd, Phnom Penh</span>
+                </div>
+                <div class="top-bar-right" style="display: flex; align-items: center; gap: 16px;">
+                    {% if user.is_authenticated %}
+                        <span>Welcome, <strong style="color: #ffffff;">{{ user.username }}</strong></span>
+                        {% if user.profile.is_manager %}
+                            <a href="{% url 'dashboard' %}" style="color: #fbbf24; text-decoration: none; font-weight: 700;"><i class="fa fa-gauge" style="margin-right: 4px;"></i>Dashboard</a>
+                        {% endif %}
+                        <a href="{% url 'logout' %}" style="color: #ffffff; text-decoration: none;"><i class="fa fa-sign-out-alt" style="margin-right: 4px;"></i>Logout</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" style="color: #ffffff; text-decoration: none;"><i class="fa fa-sign-in-alt" style="margin-right: 4px;"></i>Login</a>
+                        <span style="color: rgba(255,255,255,0.3);">|</span>
+                        <a href="{% url 'register' %}" style="color: #ffffff; text-decoration: none;"><i class="fa fa-user-plus" style="margin-right: 4px;"></i>Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier 2: Main Branding, Search & Cart -->
+        <div class="main-header" style="padding: 16px 0;">
+            <div class="container" style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
+                
+                <!-- Brand Logo (V-Tech style) -->
+                <a href="{% url 'home' %}" class="brand" style="font-size: 26px; font-weight: 900; color: #0b4c8c; display: flex; align-items: center; gap: 8px; text-decoration: none; letter-spacing: -1px; text-transform: uppercase;">
+                    <i class="fa fa-laptop-code" style="color: #dc2626; font-size: 28px;"></i>
+                    V-TECH <span style="color: #dc2626;">COMPUTER</span>
+                </a>
+                
+                <!-- Wide Search bar -->
+                <form action="{% url 'catalog' %}" method="GET" style="flex-grow: 1; max-width: 650px; display: flex; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <input type="text" name="q" class="form-input" placeholder="Search for desktops, laptops, accessories..." style="border-radius: 4px 0 0 4px; border: 1px solid #d1d5db; border-right: none; margin-bottom: 0; padding: 12px 18px; background: #ffffff; color: #111827; width: 100%; font-size: 14px;">
+                    <button type="submit" class="btn btn-primary" style="border-radius: 0 4px 4px 0; padding: 0 24px; display: flex; align-items: center; justify-content: center; background: #0b4c8c; border: 1px solid #0b4c8c; color: white;">
+                        <i class="fa fa-search" style="font-size: 16px;"></i>
+                    </button>
+                </form>
+
+                <!-- My Cart Trigger -->
+                <div class="header-cart-wrap">
+                    <button class="cart-icon-btn" id="cart-toggle-btn" style="background: #ffffff; border: 1px solid #d1d5db; padding: 10px 18px; border-radius: 4px; display: flex; align-items: center; gap: 12px; color: #1f2937; cursor: pointer; transition: var(--transition-smooth); position: relative;">
+                        <i class="fa fa-shopping-bag" style="color: #0b4c8c; font-size: 20px;"></i>
+                        <div style="text-align: left; line-height: 1.2;" class="hidden-mobile">
+                            <span style="font-size: 11px; color: #6b7280; display: block; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">My Cart</span>
+                            <strong class="header-cart-price" style="font-size: 14px; color: #0b4c8c;">$0.00</strong>
+                        </div>
+                        <span class="cart-badge" style="position: absolute; top: -6px; right: -6px; background: #dc2626; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 10.5px; display: flex; align-items: center; justify-content: center; font-weight: 700; border: 2px solid white;">0</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Tier 3: Category Quick Links Bar -->
+        <div class="category-nav-bar" style="background: #f8fafc; border-top: 1px solid var(--glass-border); padding: 12px 0;">
+            <div class="container" style="display: flex; gap: 30px; align-items: center;">
+                <div class="header-all-categories-dropdown" style="margin-right: 10px;">
+                    <a href="{% url 'catalog' %}" style="font-weight: 700; color: #0d2137; text-decoration: none; font-size: 14px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 0;">
+                        <i class="fa fa-bars" style="color: #0b4c8c;"></i> ALL CATEGORIES
+                    </a>
+                    {% include 'core/category_sidebar.html' %}
+                </div>
+                
+                <div style="display: flex; gap: 24px; align-items: center;">
+                    <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">Home</a>
+                    <a href="{% url 'catalog' %}" class="nav-link {% if request.resolver_match.url_name == 'catalog' and not request.GET.category %}active{% endif %}" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">Catalog</a>
+                    <a href="{% url 'catalog' %}?category=laptops" class="nav-link" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">Laptops</a>
+                    <a href="{% url 'catalog' %}?category=desktops" class="nav-link" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">Desktops</a>
+                    <a href="{% url 'catalog' %}?category=gpus" class="nav-link" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">CPUs & GPUs</a>
+                    <a href="{% url 'catalog' %}?category=monitors" class="nav-link" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">Monitors</a>
+                    <a href="{% url 'catalog' %}?category=accessories" class="nav-link" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">Accessories</a>
+                    <a href="{% url 'catalog' %}?category=storage" class="nav-link" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">Storage</a>
+                </div>
+            </div>
+        </div>
+
+    </header>
+
+    <!-- Main Content wrapper -->
+    <main class="container" style="flex-grow: 1; padding-top: 30px; padding-bottom: 50px;">
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="message-alert message-{{ message.tags }}">
+                        <span>{{ message }}</span>
+                        <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer; font-size:16px;">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Cart Overlay & Sidebar -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <aside class="cart-sidebar" id="cart-sidebar" style="background: #ffffff; color: #1f2937;">
+        <div class="cart-header" style="border-bottom: 1px solid var(--glass-border); padding: 20px;">
+            <h2 style="font-size: 18px; font-weight: 800; color: #1f2937;">Shopping Cart</h2>
+            <button class="close-cart-btn" id="close-cart-btn" style="color: #6b7280;">&times;</button>
+        </div>
+        <div class="cart-items-list" id="cart-items-list" style="padding: 20px;">
+            <!-- Populated dynamically via JS -->
+        </div>
+        <div class="cart-footer" style="border-top: 1px solid var(--glass-border); padding: 20px; background: #f9fafb;">
+            <div class="cart-total-row" style="display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 16px; font-weight: 800; color: #1f2937;">
+                <span>Subtotal:</span>
+                <span id="cart-subtotal" style="color: #0b4c8c;">$0.00</span>
+            </div>
+            <a href="{% url 'checkout' %}" class="btn btn-primary" style="width: 100%; padding: 14px; text-align: center; display: block; background: #0b4c8c; border-color: #0b4c8c;">Proceed to Checkout</a>
+        </div>
+    </aside>
+
+    <!-- Professional Navy Footer -->
+    <footer class="site-footer" style="background: #0d2137; border-top: 4px solid #dc2626; color: rgba(255,255,255,0.7); padding: 60px 0 30px;">
+        <div class="container footer-grid">
+            <div class="footer-col brand-col">
+                <a href="{% url 'home' %}" class="footer-logo" style="font-size: 22px; font-weight: 900; color: #ffffff; text-decoration: none; text-transform: uppercase;">
+                    V-TECH <span style="color: #dc2626;">COMPUTER</span>
+                </a>
+                <p style="margin-top: 16px; font-size: 13.5px; line-height: 1.6; color: rgba(255,255,255,0.6);">
+                    No. 393-395Eo, Kampuchea Krom Blvd, Phnom Penh, Cambodia. Premium hardware imports and retail desktop builders in Phnom Penh since 2012.
+                </p>
+                <div style="display: flex; gap: 12px; margin-top: 20px;">
+                    <a href="https://facebook.com" class="social-circle-link" style="background: rgba(255,255,255,0.05); color: #ffffff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: var(--transition-smooth);"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://telegram.org" class="social-circle-link" style="background: rgba(255,255,255,0.05); color: #ffffff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: var(--transition-smooth);"><i class="fab fa-telegram"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-col">
+                <h3 style="color: #ffffff; font-size: 16px; font-weight: 700; margin-bottom: 24px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 8px;">Product Catalog</h3>
+                <ul class="footer-links" style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 10px;"><a href="{% url 'catalog' %}?category=laptops" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13.5px; transition: var(--transition-smooth);"><i class="fa fa-angle-right" style="margin-right: 6px;"></i>Laptops</a></li>
+                    <li style="margin-bottom: 10px;"><a href="{% url 'catalog' %}?category=desktops" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13.5px; transition: var(--transition-smooth);"><i class="fa fa-angle-right" style="margin-right: 6px;"></i>Desktops</a></li>
+                    <li style="margin-bottom: 10px;"><a href="{% url 'catalog' %}?category=gpus" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13.5px; transition: var(--transition-smooth);"><i class="fa fa-angle-right" style="margin-right: 6px;"></i>CPUs & GPUs</a></li>
+                    <li style="margin-bottom: 10px;"><a href="{% url 'catalog' %}?category=monitors" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13.5px; transition: var(--transition-smooth);"><i class="fa fa-angle-right" style="margin-right: 6px;"></i>Monitors</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h3 style="color: #ffffff; font-size: 16px; font-weight: 700; margin-bottom: 24px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 8px;">Help & Support</h3>
+                <ul class="footer-links" style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 10px;"><a href="{% url 'catalog' %}" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13.5px; transition: var(--transition-smooth);"><i class="fa fa-angle-right" style="margin-right: 6px;"></i>Find a Store</a></li>
+                    <li style="margin-bottom: 10px;"><a href="{% url 'catalog' %}" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13.5px; transition: var(--transition-smooth);"><i class="fa fa-angle-right" style="margin-right: 6px;"></i>Warranty Checks</a></li>
+                    <li style="margin-bottom: 10px;"><a href="{% url 'catalog' %}" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13.5px; transition: var(--transition-smooth);"><i class="fa fa-angle-right" style="margin-right: 6px;"></i>Shipping & Returns</a></li>
+                    <li style="margin-bottom: 10px;"><a href="{% url 'catalog' %}" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13.5px; transition: var(--transition-smooth);"><i class="fa fa-angle-right" style="margin-right: 6px;"></i>Terms of Service</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-col">
+                <h3 style="color: #ffffff; font-size: 16px; font-weight: 700; margin-bottom: 24px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 8px;">Contact Store</h3>
+                <p style="font-size: 13.5px; margin-bottom: 12px; color: rgba(255,255,255,0.6);"><i class="fa fa-envelope" style="color: #dc2626; margin-right: 8px;"></i>sales@vtech-computer.com</p>
+                <p style="font-size: 13.5px; margin-bottom: 12px; color: rgba(255,255,255,0.6);"><i class="fa fa-clock" style="color: #dc2626; margin-right: 8px;"></i>Mon - Sun: 8:00 AM - 8:00 PM</p>
+                <p style="font-size: 13.5px; color: rgba(255,255,255,0.6);"><i class="fa fa-map-marked-alt" style="color: #dc2626; margin-right: 8px;"></i>No. 393-395 Kampuchea Krom, Phnom Penh</p>
+            </div>
+        </div>
+        
+        <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 40px; padding-top: 20px; text-align: center; font-size: 12px; color: rgba(255,255,255,0.4);">
+            <p>&copy; {% now "Y" %} V-Tech Computer Cambodia. All Rights Reserved. Powered by CYBERSTORE.</p>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

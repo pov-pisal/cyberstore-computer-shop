@@ -1,0 +1,616 @@
+{% extends 'base.html' %}
+
+{% block title %}Manager Dashboard | CYBERSTORE Computer Shop{% endblock %}
+
+{% block content %}
+<div style="padding: 40px 0;">
+    <div style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <h1 style="font-size: 32px; font-weight: 800;">Management <span>Dashboard</span></h1>
+            <p style="color: var(--text-secondary);">Real-time business insights, inventory alerts, and order processing workflows.</p>
+        </div>
+        <div>
+            <a href="{% url 'admin:index' %}" class="btn btn-secondary" style="font-size: 13px; display: flex; align-items: center; gap: 8px;" target="_blank">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Advanced Django Admin
+            </a>
+        </div>
+    </div>
+    
+    <!-- Tabbed Navigation -->
+    <div class="dashboard-tabs">
+        <a href="?tab=overview" class="tab-btn {% if active_tab == 'overview' %}active{% endif %}">Overview</a>
+        <a href="?tab=products" class="tab-btn {% if active_tab == 'products' %}active{% endif %}">Manage Products</a>
+        <a href="?tab=categories" class="tab-btn {% if active_tab == 'categories' %}active{% endif %}">Manage Categories</a>
+        <a href="?tab=orders" class="tab-btn {% if active_tab == 'orders' %}active{% endif %}">Manage Orders</a>
+        <a href="?tab=users" class="tab-btn {% if active_tab == 'users' %}active{% endif %}">Manage Users</a>
+        <a href="?tab=carts" class="tab-btn {% if active_tab == 'carts' %}active{% endif %}">Active Carts</a>
+    </div>
+
+    <!-- TAB PANEL: OVERVIEW -->
+    {% if active_tab == 'overview' %}
+    <!-- Metrics Grid -->
+    <div class="dashboard-metrics" style="margin-bottom: 30px;">
+        <div class="glass-card metric-card">
+            <div class="metric-label">Total Revenue</div>
+            <div class="metric-value">${{ total_revenue }}</div>
+            <div class="metric-accent" style="background: var(--accent-cyan);"></div>
+        </div>
+        <div class="glass-card metric-card">
+            <div class="metric-label">Total Orders</div>
+            <div class="metric-value">{{ total_orders_count }}</div>
+            <div class="metric-accent" style="background: var(--accent-indigo);"></div>
+        </div>
+        <div class="glass-card metric-card">
+            <div class="metric-label">Pending Orders</div>
+            <div class="metric-value">{{ pending_orders_count }}</div>
+            <div class="metric-accent" style="background: var(--accent-amber);"></div>
+        </div>
+        <div class="glass-card metric-card">
+            <div class="metric-label">Low Stock Items</div>
+            <div class="metric-value" style="color: {% if low_stock_count > 0 %}var(--accent-rose){% else %}var(--text-primary){% endif %}">
+                {{ low_stock_count }}
+            </div>
+            <div class="metric-accent" style="background: var(--accent-rose);"></div>
+        </div>
+    </div>
+    
+    <div class="dashboard-sections">
+        <!-- Recent Orders -->
+        <div class="glass-card dashboard-card">
+            <h2>Recent Orders</h2>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders|slice:":5" %}
+                            <tr>
+                                <td style="font-weight: 700; color: white;">#{{ order.id }}</td>
+                                <td>
+                                    <strong>{{ order.full_name }}</strong>
+                                    <div style="font-size: 11px; color: var(--text-muted);">{{ order.email }}</div>
+                                </td>
+                                <td style="font-weight: 700; color: var(--accent-cyan);">${{ order.total_amount }}</td>
+                                <td>
+                                    <span class="badge badge-{{ order.status|lower }}">{{ order.status }}</span>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">
+                                    No customer orders placed yet.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Stock Warnings -->
+        <div class="glass-card dashboard-card">
+            <h2>Inventory Stock Warnings</h2>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in low_stock_items %}
+                            <tr>
+                                <td style="font-size: 13px;">
+                                    <strong>{{ item.name }}</strong>
+                                    <div style="font-size: 10px; color: var(--text-muted);">SKU: {{ item.sku }}</div>
+                                </td>
+                                <td style="font-weight: 700; color: var(--accent-rose);">
+                                    {{ item.stock }} left
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="2" style="text-align: center; color: var(--accent-emerald); padding: 30px 0; font-size: 14px;">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-bottom: 8px; display: block; margin: 0 auto 8px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    All products fully stocked.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB PANEL: PRODUCTS -->
+    {% elif active_tab == 'products' %}
+    <!-- Add New Product Form -->
+    <div class="glass-card" style="margin-bottom: 30px;">
+        <h2 style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin: 0;" onclick="document.getElementById('add-product-form').style.display = document.getElementById('add-product-form').style.display === 'block' ? 'none' : 'block';">
+            <span>+ Add New Product</span>
+            <span style="font-size: 13px; color: var(--accent-cyan); font-weight: normal;">[Click to Expand]</span>
+        </h2>
+        <form id="add-product-form" method="POST" action="{% url 'add_product' %}" style="display: none; margin-top: 24px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label class="form-label">Product Name</label>
+                    <input type="text" name="name" class="form-input" required placeholder="e.g. AMD Ryzen 7 7800X3D CPU">
+                </div>
+                <div>
+                    <label class="form-label">Brand</label>
+                    <input type="text" name="brand" class="form-input" required placeholder="e.g. AMD">
+                </div>
+                <div>
+                    <label class="form-label">SKU</label>
+                    <input type="text" name="sku" class="form-input" required placeholder="e.g. CPU-AMD-R7-7800X3D">
+                </div>
+                <div>
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-input" required style="background: var(--bg-secondary);">
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label class="form-label">Price ($)</label>
+                    <input type="number" step="0.01" name="price" class="form-input" required placeholder="349.00">
+                </div>
+                <div>
+                    <label class="form-label">Stock Quantity</label>
+                    <input type="number" name="stock" class="form-input" required placeholder="12">
+                </div>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label class="form-label">Image URL</label>
+                <input type="url" name="image_url" class="form-input" placeholder="e.g. https://images.unsplash.com/photo-...">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label class="form-label">Specifications (JSON Format)</label>
+                <textarea name="specifications" class="form-input" rows="4" style="font-family: monospace;" placeholder='{
+  "Socket": "Socket AM5",
+  "Cores": "8 Cores",
+  "Threads": "16 Threads",
+  "TDP": "120W"
+}'></textarea>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-input" rows="3" required placeholder="Provide a brief marketing description..."></textarea>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary);">
+                    <input type="checkbox" name="is_active" checked> Enable / Visible in Catalog
+                </label>
+                <button type="submit" class="btn btn-primary">Save Product</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Product List -->
+    <div class="glass-card">
+        <h2>System Products</h2>
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Name</th>
+                        <th>Brand</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                        <tr>
+                            <td style="font-family: monospace; font-size: 12px; color: var(--text-muted);">{{ p.sku }}</td>
+                            <td><strong>{{ p.name }}</strong></td>
+                            <td>{{ p.brand }}</td>
+                            <td>{{ p.category.name }}</td>
+                            <td style="font-weight: 700; color: var(--accent-cyan);">${{ p.price }}</td>
+                            <td>{{ p.stock }} units</td>
+                            <td>
+                                {% if p.is_active %}
+                                    <span class="badge badge-completed">Active</span>
+                                {% else %}
+                                    <span class="badge badge-cancelled">Hidden</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 6px;">
+                                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="const r = document.getElementById('edit-product-row-{{ p.id }}'); r.style.display = r.style.display === 'none' ? 'table-row' : 'none';">Edit</button>
+                                    <a href="{% url 'delete_product' p.id %}" class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="return confirm('Are you sure you want to delete this product?');">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Inline Edit Product Row -->
+                        <tr id="edit-product-row-{{ p.id }}" style="display: none; background: rgba(0, 0, 0, 0.25);">
+                            <td colspan="8" style="padding: 24px; border-left: 3px solid var(--accent-indigo);">
+                                <h4 style="margin-top: 0; margin-bottom: 16px; font-size: 16px;">Edit Product: {{ p.name }}</h4>
+                                <form method="POST" action="{% url 'edit_product' p.id %}">
+                                    {% csrf_token %}
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                                        <div>
+                                            <label class="form-label">Product Name</label>
+                                            <input type="text" name="name" class="form-input" required value="{{ p.name }}">
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Brand</label>
+                                            <input type="text" name="brand" class="form-input" required value="{{ p.brand }}">
+                                        </div>
+                                        <div>
+                                            <label class="form-label">SKU</label>
+                                            <input type="text" name="sku" class="form-input" required value="{{ p.sku }}">
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Category</label>
+                                            <select name="category" class="form-input" required style="background: var(--bg-secondary);">
+                                                {% for cat in categories %}
+                                                    <option value="{{ cat.id }}" {% if p.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                        <div>
+                                            <label class="form-label">Price ($)</label>
+                                            <input type="number" step="0.01" name="price" class="form-input" required value="{{ p.price }}">
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Stock Quantity</label>
+                                            <input type="number" name="stock" class="form-input" required value="{{ p.stock }}">
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom: 16px;">
+                                        <label class="form-label">Image URL</label>
+                                        <input type="url" name="image_url" class="form-input" value="{{ p.image_url }}">
+                                    </div>
+                                    <div style="margin-bottom: 16px;">
+                                        <label class="form-label">Specifications (JSON Format)</label>
+                                        <textarea name="specifications" class="form-input" rows="5" style="font-family: monospace;">{{ p.specifications_json }}</textarea>
+                                    </div>
+                                    <div style="margin-bottom: 20px;">
+                                        <label class="form-label">Description</label>
+                                        <textarea name="description" class="form-input" rows="3" required>{{ p.description }}</textarea>
+                                    </div>
+                                    <div style="display: flex; justify-content: flex-between; align-items: center; gap: 16px;">
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary); margin-right: auto;">
+                                            <input type="checkbox" name="is_active" {% if p.is_active %}checked{% endif %}> Is Active / Visible
+                                        </label>
+                                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-product-row-{{ p.id }}').style.display = 'none';">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Update Product</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">
+                                No products found in the database.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB PANEL: CATEGORIES -->
+    {% elif active_tab == 'categories' %}
+    <!-- Add New Category Form -->
+    <div class="glass-card" style="margin-bottom: 30px;">
+        <h2 style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin: 0;" onclick="document.getElementById('add-category-form').style.display = document.getElementById('add-category-form').style.display === 'block' ? 'none' : 'block';">
+            <span>+ Add New Category</span>
+            <span style="font-size: 13px; color: var(--accent-cyan); font-weight: normal;">[Click to Expand]</span>
+        </h2>
+        <form id="add-category-form" method="POST" action="{% url 'add_category' %}" style="display: none; margin-top: 24px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
+            {% csrf_token %}
+            <div style="margin-bottom: 16px;">
+                <label class="form-label">Category Name</label>
+                <input type="text" name="name" class="form-input" required placeholder="e.g. Keyboards & Mice">
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-input" rows="3" placeholder="Category summary..."></textarea>
+            </div>
+            <div style="text-align: right;">
+                <button type="submit" class="btn btn-primary">Save Category</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Category List -->
+    <div class="glass-card">
+        <h2>System Categories</h2>
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Slug</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in categories %}
+                        <tr>
+                            <td>{{ cat.id }}</td>
+                            <td><strong>{{ cat.name }}</strong></td>
+                            <td style="font-family: monospace; font-size: 13px; color: var(--text-muted);">{{ cat.slug }}</td>
+                            <td style="font-size: 13px;">{{ cat.description }}</td>
+                            <td>
+                                <div style="display: flex; gap: 6px;">
+                                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="const r = document.getElementById('edit-category-row-{{ cat.id }}'); r.style.display = r.style.display === 'none' ? 'table-row' : 'none';">Edit</button>
+                                    <a href="{% url 'delete_category' cat.id %}" class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="return confirm('Are you sure you want to delete this category? It will unlink its products.');">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Inline Edit Category Row -->
+                        <tr id="edit-category-row-{{ cat.id }}" style="display: none; background: rgba(0, 0, 0, 0.25);">
+                            <td colspan="5" style="padding: 24px; border-left: 3px solid var(--accent-indigo);">
+                                <h4 style="margin-top: 0; margin-bottom: 16px; font-size: 16px;">Edit Category: {{ cat.name }}</h4>
+                                <form method="POST" action="{% url 'edit_category' cat.id %}">
+                                    {% csrf_token %}
+                                    <div style="margin-bottom: 16px;">
+                                        <label class="form-label">Category Name</label>
+                                        <input type="text" name="name" class="form-input" required value="{{ cat.name }}">
+                                    </div>
+                                    <div style="margin-bottom: 20px;">
+                                        <label class="form-label">Description</label>
+                                        <textarea name="description" class="form-input" rows="3">{{ cat.description }}</textarea>
+                                    </div>
+                                    <div style="text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
+                                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-category-row-{{ cat.id }}').style.display = 'none';">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Update Category</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">
+                                No categories found.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB PANEL: ORDERS -->
+    {% elif active_tab == 'orders' %}
+    <div class="glass-card">
+        <h2>Customer Purchase Orders</h2>
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Delivery Address</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                        <th>Order Items</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td style="font-weight: 700; color: white;">#{{ order.id }}</td>
+                            <td>
+                                <strong>{{ order.full_name }}</strong>
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ order.email }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ order.phone }}</div>
+                            </td>
+                            <td style="font-size: 13px;">
+                                {{ order.address }}, {{ order.city }}
+                            </td>
+                            <td style="font-weight: 700; color: var(--accent-cyan); font-size: 15px;">${{ order.total_amount }}</td>
+                            <td>
+                                <form method="POST" action="{% url 'update_order_status' order.id %}">
+                                    {% csrf_token %}
+                                    <select name="status" class="form-input" style="padding: 6px 10px; font-size: 12px; width: auto; background: var(--bg-secondary); border-color: var(--glass-border);" onchange="this.form.submit()">
+                                        <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                        <option value="Processing" {% if order.status == 'Processing' %}selected{% endif %}>Processing</option>
+                                        <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                        <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td style="font-size: 12px; color: var(--text-muted);">{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                            <td style="font-size: 12px;">
+                                <ul style="padding-left: 14px; margin: 0; list-style-type: square; color: var(--text-secondary);">
+                                    {% for item in order.items.all %}
+                                        <li>{{ item.product.name }} (x{{ item.quantity }})</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">
+                                No orders found.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB PANEL: USERS -->
+    {% elif active_tab == 'users' %}
+    <!-- Add New User Account -->
+    <div class="glass-card" style="margin-bottom: 30px;">
+        <h2 style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin: 0;" onclick="document.getElementById('add-user-form').style.display = document.getElementById('add-user-form').style.display === 'block' ? 'none' : 'block';">
+            <span>+ Create User Account</span>
+            <span style="font-size: 13px; color: var(--accent-cyan); font-weight: normal;">[Click to Expand]</span>
+        </h2>
+        <form id="add-user-form" method="POST" action="{% url 'add_user' %}" style="display: none; margin-top: 24px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                <div>
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-input" required placeholder="e.g. hardware_manager">
+                </div>
+                <div>
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-input" required placeholder="e.g. manager@cyberstore.com">
+                </div>
+                <div>
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-input" required placeholder="••••••••">
+                </div>
+            </div>
+            <div style="display: flex; gap: 24px; align-items: center; margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary);">
+                    <input type="checkbox" name="is_staff"> Is Django Admin Staff
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary);">
+                    <input type="checkbox" name="is_manager"> Is Cyberstore Shop Manager
+                </label>
+            </div>
+            <div style="text-align: right;">
+                <button type="submit" class="btn btn-primary">Create User Account</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Users List -->
+    <div class="glass-card">
+        <h2>User Accounts</h2>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">* Click on the Staff or Shop Manager badges to toggle user roles instantly.</p>
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Date Joined</th>
+                        <th>Admin Staff Role</th>
+                        <th>Shop Manager Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                        <tr>
+                            <td>{{ u.id }}</td>
+                            <td><strong>{{ u.username }}</strong></td>
+                            <td style="font-size: 13px;">{{ u.email|default:"- None -" }}</td>
+                            <td style="font-size: 12px; color: var(--text-muted);">{{ u.date_joined|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                {% if u == request.user %}
+                                    <span class="badge badge-toggle-btn active" style="cursor: not-allowed; opacity: 0.75;">Active (You)</span>
+                                {% else %}
+                                    <a href="{% url 'toggle_user_role' u.id %}?type=staff" class="badge-toggle-btn {% if u.is_staff %}active{% else %}inactive{% endif %}">
+                                        {% if u.is_staff %}Staff Active{% else %}Staff Inactive{% endif %}
+                                    </a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if u == request.user %}
+                                    <span class="badge badge-toggle-btn active" style="cursor: not-allowed; opacity: 0.75;">Active (You)</span>
+                                {% else %}
+                                    <a href="{% url 'toggle_user_role' u.id %}?type=manager" class="badge-toggle-btn {% if u.profile.is_manager %}active{% else %}inactive{% endif %}">
+                                        {% if u.profile.is_manager %}Manager Active{% else %}Manager Inactive{% endif %}
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">
+                                No users found.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB PANEL: CARTS -->
+    {% elif active_tab == 'carts' %}
+    <div class="glass-card">
+        <h2>Active Shopping Carts</h2>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Tracks open user shopping carts. Guest carts represent active unauthenticated client browser sessions.</p>
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Cart ID</th>
+                        <th>Owner Account / Session</th>
+                        <th>Total Items Count</th>
+                        <th>Last Modified</th>
+                        <th>Cart Contents</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in carts %}
+                        <tr>
+                            <td style="font-weight: 700;">#{{ c.id }}</td>
+                            <td>
+                                {% if c.user %}
+                                    <span style="color: var(--accent-cyan); font-weight: 600;">User: {{ c.user.username }}</span>
+                                    <div style="font-size: 11px; color: var(--text-muted);">Email: {{ c.user.email }}</div>
+                                {% else %}
+                                    <span style="color: var(--text-secondary);">Guest Session</span>
+                                    <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">Key: {{ c.session_key|slice:":12" }}...</div>
+                                {% endif %}
+                            </td>
+                            <td style="font-weight: bold; font-size: 14px;">{{ c.items.count }} unique items</td>
+                            <td style="font-size: 12px; color: var(--text-muted);">{{ c.created_at|date:"Y-m-d H:i" }}</td>
+                            <td style="font-size: 12px;">
+                                <ul style="padding-left: 14px; margin: 0; list-style-type: square; color: var(--text-secondary);">
+                                    {% for item in c.items.all %}
+                                        <li>{{ item.product.name }} (x{{ item.quantity }})</li>
+                                    {% empty %}
+                                        <span style="color: var(--text-muted); font-style: italic;">Empty Cart</span>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td>
+                                <a href="{% url 'delete_cart' c.id %}" class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="return confirm('Are you sure you want to clear/delete this cart?');">Delete Cart</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">
+                                No shopping carts currently active.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

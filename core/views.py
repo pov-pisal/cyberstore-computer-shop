@@ -1,0 +1,710 @@
+import json
+from decimal import Decimal
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.db.models import Sum, Q
+from .models import Product, Category, UserProfile, Cart, CartItem, Order, OrderItem, Coupon, Review
+
+# Helper: Get or create cart, with guest-to-user merging
+def get_or_create_cart(request):
+    if request.user.is_authenticated:
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        # Check if there is an anonymous session cart to merge
+        session_key = request.session.session_key
+        if session_key:
+            session_cart = Cart.objects.filter(session_key=session_key).first()
+            if session_cart:
+                for item in session_cart.items.all():
+                    # Check if item already in user cart
+                    user_item = CartItem.objects.filter(cart=cart, product=item.product).first()
+                    if user_item:
+                        user_item.quantity += item.quantity
+                        user_item.save()
+                        item.delete()
+                    else:
+                        item.cart = cart
+                        item.save()
+                session_cart.delete()
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        session_key = request.session.session_key
+        cart, created = Cart.objects.get_or_create(session_key=session_key)
+    return cart
+
+# Helper to serialize cart items
+def serialize_cart(cart):
+    items_data = []
+    for item in cart.items.all().select_related('product'):
+        items_data.append({
+            'id': item.id,
+            'product_id': item.product.id,
+            'name': item.product.name,
+            'price': str(item.product.price),
+            'quantity': item.quantity,
+            'image_url': item.product.get_image_url,
+            'slug': item.product.slug,
+            'cost': str(item.get_cost)
+        })
+    return {
+        'items': items_data,
+        'total_items': cart.get_total_items,
+        'total_price': str(cart.get_total_price)
+    }
+
+def home(request):
+    # Retrieve top 4 featured products
+    featured_products = Product.objects.filter(is_active=True).order_by('-created_at')[:4]
+    # Retrieve 4 best sellers (popular premium products)
+    best_sellers = Product.objects.filter(is_active=True).order_by('-price')[:4]
+    return render(request, 'core/home.html', {
+        'featured_products': featured_products,
+        'best_sellers': best_sellers
+    })
+
+def catalog(request):
+    products = Product.objects.filter(is_active=True)
+    categories = Category.objects.all()
+    for cat in categories:
+        cat.brands = Product.objects.filter(category=cat, is_active=True).exclude(brand='').values_list('brand', flat=True).distinct().order_by('brand')
+        cat.product_count = Product.objects.filter(category=cat, is_active=True).count()
+    brands = Product.objects.filter(is_active=True).exclude(brand='').values_list('brand', flat=True).distinct().order_by('brand')
+    
+    category_slug = request.GET.get('category')
+    active_category = None
+    if category_slug:
+        active_category = get_object_or_404(Category, slug=category_slug)
+        products = products.filter(category=active_category)
+        
+    active_brand = request.GET.get('brand')
+    if active_brand:
+        products = products.filter(brand=active_brand)
+        
+    query = request.GET.get('q')
+    if query:
+        products = products.filter(
+            Q(name__icontains=query) | 
+            Q(description__icontains=query) |
+            Q(sku__icontains=query) |
+            Q(brand__icontains=query)
+        )
+        
+    best_sellers = products.order_by('-price')[:2]
+        
+    context = {
+        'products': products,
+        'categories': categories,
+        'brands': brands,
+        'active_category': active_category,
+        'active_brand': active_brand,
+        'best_sellers': best_sellers
+    }
+    return render(request, 'core/catalog.html', context)
+
+# AJAX Catalog Search API
+def catalog_json(request):
+    products = Product.objects.filter(is_active=True)
+    
+    category_slug = request.GET.get('category')
+    if category_slug:
+        products = products.filter(category__slug=category_slug)
+        
+    active_brand = request.GET.get('brand')
+    if active_brand:
+        products = products.filter(brand=active_brand)
+        
+    query = request.GET.get('q')
+    if query:
+        products = products.filter(
+            Q(name__icontains=query) | 
+            Q(description__icontains=query) |
+            Q(sku__icontains=query) |
+            Q(brand__icontains=query)
+        )
+        
+    products_data = []
+    for p in products:
+        products_data.append({
+            'id': p.id,
+            'name': p.name,
+            'slug': p.slug,
+            'description': p.description,
+            'price': str(p.price),
+            'stock': p.stock,
+            'image_url': p.get_image_url,
+            'category_name': p.category.name,
+            'brand': p.brand,
+            'average_rating': p.average_rating,
+            'review_count': p.review_count
+        })
+    return JsonResponse({'products': products_data})
+
+def product_detail(request, slug):
+    product = get_object_or_404(Product, slug=slug, is_active=True)
+    has_reviewed = False
+    if request.user.is_authenticated:
+        has_reviewed = Review.objects.filter(product=product, user=request.user).exists()
+    reviews = product.reviews.all()
+    related_products = product.get_related_products
+    return render(request, 'core/detail.html', {
+        'product': product,
+        'reviews': reviews,
+        'related_products': related_products,
+        'has_reviewed': has_reviewed
+    })
+
+# AJAX Cart Views
+def cart_data(request):
+    cart = get_or_create_cart(request)
+    return JsonResponse(serialize_cart(cart))
+
+def cart_add(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            product_id = data.get('product_id')
+            quantity = int(data.get('quantity', 1))
+            
+            product = get_object_or_404(Product, id=product_id)
+            if product.stock < quantity:
+                return JsonResponse({'success': False, 'error': f'Only {product.stock} items left in stock.'})
+                
+            cart = get_or_create_cart(request)
+            item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+            if not created:
+                if product.stock < item.quantity + quantity:
+                    return JsonResponse({'success': False, 'error': f'Cannot add more. Max available stock is {product.stock}.'})
+                item.quantity += quantity
+            else:
+                item.quantity = quantity
+            item.save()
+            
+            return JsonResponse({'success': True, **serialize_cart(cart)})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+def cart_update(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            item_id = data.get('item_id')
+            change = int(data.get('change', 0))
+            
+            cart = get_or_create_cart(request)
+            item = get_object_or_404(CartItem, id=item_id, cart=cart)
+            
+            new_qty = item.quantity + change
+            if new_qty <= 0:
+                item.delete()
+            else:
+                if item.product.stock < new_qty:
+                    return JsonResponse({'success': False, 'error': 'Requested quantity exceeds available stock.'})
+                item.quantity = new_qty
+                item.save()
+                
+            return JsonResponse({'success': True, **serialize_cart(cart)})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+def cart_remove(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            item_id = data.get('item_id')
+            
+            cart = get_or_create_cart(request)
+            item = get_object_or_404(CartItem, id=item_id, cart=cart)
+            item.delete()
+            
+            return JsonResponse({'success': True, **serialize_cart(cart)})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+# Checkout View
+def checkout(request):
+    cart = get_or_create_cart(request)
+    if cart.get_total_items == 0:
+        messages.warning(request, "Your cart is empty. Please add items to checkout.")
+        return redirect('catalog')
+        
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        address = request.POST.get('address')
+        city = request.POST.get('city')
+        country = request.POST.get('country')
+        
+        # Verify stock check
+        for item in cart.items.all():
+            if item.product.stock < item.quantity:
+                messages.error(request, f"Sorry, {item.product.name} is now out of stock or does not have enough inventory.")
+                return redirect('checkout')
+                
+        # Check for coupon in session
+        coupon_code = request.session.get('coupon_code')
+        coupon = None
+        discount_amount = 0.00
+        subtotal = cart.get_total_price
+        
+        if coupon_code:
+            coupon = Coupon.objects.filter(code=coupon_code, is_active=True).first()
+            if coupon:
+                discount_amount = round(subtotal * Decimal(coupon.discount_percent) / Decimal(100), 2)
+                
+        total_amount = subtotal - discount_amount
+        
+        # Create Order
+        order = Order.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            full_name=full_name,
+            email=email,
+            phone=phone,
+            address=address,
+            city=city,
+            country=country,
+            total_amount=total_amount,
+            coupon=coupon,
+            discount_amount=discount_amount
+        )
+        
+        # Create Order Items and decrease stock
+        for item in cart.items.all():
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                price=item.product.price,
+                quantity=item.quantity
+            )
+            item.product.stock -= item.quantity
+            item.product.save()
+            
+        # Clear Cart & Coupon Session
+        cart.items.all().delete()
+        request.session.pop('coupon_code', None)
+        
+        return redirect('checkout_success', order_id=order.id)
+        
+    # Clear any leftover coupon code when rendering page initially
+    request.session.pop('coupon_code', None)
+    return render(request, 'core/checkout.html', {'cart': cart})
+
+def checkout_success(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    return render(request, 'core/checkout_success.html', {'order': order})
+
+# User Auth Views
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+        
+    next_page = request.GET.get('next', 'home')
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            messages.success(request, f"Logged in successfully as {username}!")
+            
+            # Check next parameter
+            next_url = request.POST.get('next', 'home')
+            if not next_url or next_url == '':
+                next_url = 'home'
+            return redirect(next_url)
+        else:
+            messages.error(request, "Invalid username or password.")
+            
+    return render(request, 'core/login.html', {'next': next_page})
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+        
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+        address = request.POST.get('address')
+        city = request.POST.get('city')
+        country = request.POST.get('country')
+        
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return render(request, 'core/register.html')
+            
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists.")
+            return render(request, 'core/register.html')
+            
+        user = User.objects.create_user(username=username, email=email, password=password)
+        
+        # Profile fields (UserProfile created automatically by signals, we update it)
+        user.profile.phone = phone
+        user.profile.address = address
+        user.profile.city = city
+        user.profile.country = country
+        user.save()
+        
+        login(request, user)
+        messages.success(request, "Registration successful!")
+        return redirect('home')
+        
+    return render(request, 'core/register.html')
+
+def logout_view(request):
+    logout(request)
+    messages.info(request, "You have been logged out.")
+    return redirect('home')
+
+# Manager Dashboard Views
+def is_manager(user):
+    return user.is_authenticated and hasattr(user, 'profile') and user.profile.is_manager
+
+def dashboard_view(request):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied. Only shop managers can access this dashboard.")
+        return redirect('home')
+        
+    orders = Order.objects.all().order_by('-created_at')
+    products = Product.objects.all().order_by('-created_at')
+    categories = Category.objects.all().order_by('name')
+    users = User.objects.all().order_by('-date_joined')
+    carts = Cart.objects.all().order_by('-id')
+    
+    # Statistics
+    total_revenue = Order.objects.filter(status='Completed', is_paid=True).aggregate(Sum('total_amount'))['total_amount__sum'] or 0.00
+    total_orders_count = orders.count()
+    pending_orders_count = Order.objects.filter(status='Pending').count()
+    
+    # Low stock items (stock <= 5)
+    low_stock_items = Product.objects.filter(stock__lte=5, is_active=True).order_by('stock')
+    low_stock_count = low_stock_items.count()
+    
+    active_tab = request.GET.get('tab', 'overview')
+    
+    context = {
+        'orders': orders,
+        'products': products,
+        'categories': categories,
+        'users': users,
+        'carts': carts,
+        'total_revenue': total_revenue,
+        'total_orders_count': total_orders_count,
+        'pending_orders_count': pending_orders_count,
+        'low_stock_items': low_stock_items,
+        'low_stock_count': low_stock_count,
+        'active_tab': active_tab
+    }
+    return render(request, 'core/dashboard.html', context)
+
+def update_order_status(request, order_id):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    if request.method == 'POST':
+        order = get_object_or_404(Order, id=order_id)
+        new_status = request.POST.get('status')
+        if new_status in dict(Order.STATUS_CHOICES):
+            order.status = new_status
+            if new_status == 'Completed':
+                order.is_paid = True
+            order.save()
+            messages.success(request, f"Order #{order.id} status updated to {new_status}.")
+            
+    return redirect('/dashboard/?tab=orders')
+
+# 1. Product Management CRUD
+def add_product(request):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    if request.method == 'POST':
+        category_id = request.POST.get('category')
+        name = request.POST.get('name')
+        brand = request.POST.get('brand')
+        sku = request.POST.get('sku')
+        description = request.POST.get('description')
+        price = request.POST.get('price')
+        stock = request.POST.get('stock')
+        image_url = request.POST.get('image_url', '') or ''
+        is_active = request.POST.get('is_active') == 'on'
+        
+        specs_str = request.POST.get('specifications', '{}')
+        try:
+            specs = json.loads(specs_str)
+        except Exception:
+            messages.error(request, "Invalid JSON formatting in specifications. Must be valid JSON (e.g. {\"Key\": \"Value\"}).")
+            return redirect('/dashboard/?tab=products')
+            
+        from django.utils.text import slugify
+        slug = slugify(name)
+        base_slug = slug
+        counter = 1
+        while Product.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+            
+        category = get_object_or_404(Category, id=category_id)
+        
+        try:
+            Product.objects.create(
+                category=category,
+                name=name,
+                slug=slug,
+                sku=sku,
+                brand=brand,
+                description=description,
+                price=price,
+                stock=stock,
+                specifications=specs,
+                image_url=image_url,
+                is_active=is_active
+            )
+            messages.success(request, f"Product '{name}' added successfully.")
+        except Exception as e:
+            messages.error(request, f"Error adding product: {str(e)}")
+            
+    return redirect('/dashboard/?tab=products')
+
+def edit_product(request, product_id):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    product = get_object_or_404(Product, id=product_id)
+    if request.method == 'POST':
+        product.category = get_object_or_404(Category, id=request.POST.get('category'))
+        product.name = request.POST.get('name')
+        product.brand = request.POST.get('brand')
+        product.sku = request.POST.get('sku')
+        product.description = request.POST.get('description')
+        product.price = request.POST.get('price')
+        product.stock = request.POST.get('stock')
+        product.image_url = request.POST.get('image_url', '') or ''
+        product.is_active = request.POST.get('is_active') == 'on'
+        
+        specs_str = request.POST.get('specifications', '{}')
+        try:
+            specs = json.loads(specs_str)
+            product.specifications = specs
+        except Exception:
+            messages.error(request, "Invalid JSON formatting in specifications. Must be valid JSON.")
+            return redirect('/dashboard/?tab=products')
+            
+        try:
+            product.save()
+            messages.success(request, f"Product '{product.name}' updated successfully.")
+        except Exception as e:
+            messages.error(request, f"Error updating product: {str(e)}")
+            
+    return redirect('/dashboard/?tab=products')
+
+def delete_product(request, product_id):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    product = get_object_or_404(Product, id=product_id)
+    name = product.name
+    product.delete()
+    messages.success(request, f"Product '{name}' deleted successfully.")
+    return redirect('/dashboard/?tab=products')
+
+# 2. Category Management CRUD
+def add_category(request):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        
+        from django.utils.text import slugify
+        slug = slugify(name)
+        base_slug = slug
+        counter = 1
+        while Category.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+            
+        try:
+            Category.objects.create(name=name, slug=slug, description=description)
+            messages.success(request, f"Category '{name}' created successfully.")
+        except Exception as e:
+            messages.error(request, f"Error adding category: {str(e)}")
+            
+    return redirect('/dashboard/?tab=categories')
+
+def edit_category(request, category_id):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    category = get_object_or_404(Category, id=category_id)
+    if request.method == 'POST':
+        category.name = request.POST.get('name')
+        category.description = request.POST.get('description')
+        try:
+            category.save()
+            messages.success(request, f"Category '{category.name}' updated successfully.")
+        except Exception as e:
+            messages.error(request, f"Error updating category: {str(e)}")
+            
+    return redirect('/dashboard/?tab=categories')
+
+def delete_category(request, category_id):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    category = get_object_or_404(Category, id=category_id)
+    name = category.name
+    category.delete()
+    messages.success(request, f"Category '{name}' deleted successfully.")
+    return redirect('/dashboard/?tab=categories')
+
+# 3. User Role Management
+def toggle_user_role(request, user_id):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    target_user = get_object_or_404(User, id=user_id)
+    if target_user == request.user:
+        messages.error(request, "You cannot modify your own roles.")
+        return redirect('/dashboard/?tab=users')
+        
+    role_type = request.GET.get('type')
+    if role_type == 'manager':
+        profile = target_user.profile
+        profile.is_manager = not profile.is_manager
+        profile.save()
+        messages.success(request, f"User '{target_user.username}' manager status updated.")
+    elif role_type == 'staff':
+        target_user.is_staff = not target_user.is_staff
+        target_user.save()
+        messages.success(request, f"User '{target_user.username}' staff status updated.")
+        
+    return redirect('/dashboard/?tab=users')
+
+# 4. Cart Management CRUD
+def delete_cart(request, cart_id):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    cart = get_object_or_404(Cart, id=cart_id)
+    cart.delete()
+    messages.success(request, "Cart deleted successfully.")
+    return redirect('/dashboard/?tab=carts')
+
+# 5. User Creation CRUD
+def add_user(request):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        is_staff = request.POST.get('is_staff') == 'on'
+        is_manager_role = request.POST.get('is_manager') == 'on'
+        
+        if User.objects.filter(username=username).exists():
+            messages.error(request, f"Username '{username}' already exists.")
+            return redirect('/dashboard/?tab=users')
+            
+        try:
+            new_user = User.objects.create_user(username=username, email=email, password=password)
+            new_user.is_staff = is_staff
+            new_user.save()
+            
+            profile = new_user.profile
+            profile.is_manager = is_manager_role
+            profile.save()
+            
+            messages.success(request, f"User account '{username}' created successfully.")
+        except Exception as e:
+            messages.error(request, f"Error creating user: {str(e)}")
+            
+    return redirect('/dashboard/?tab=users')
+
+
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+
+def apply_coupon(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            code = data.get('code', '').strip().upper()
+            cart = get_or_create_cart(request)
+            
+            if cart.get_total_items == 0:
+                return JsonResponse({'success': False, 'error': 'Cart is empty.'})
+                
+            coupon = Coupon.objects.filter(code=code, is_active=True).first()
+            if not coupon:
+                return JsonResponse({'success': False, 'error': 'Invalid or inactive promo code.'})
+                
+            subtotal = cart.get_total_price
+            discount = round(subtotal * Decimal(coupon.discount_percent) / Decimal(100), 2)
+            new_total = subtotal - discount
+            
+            request.session['coupon_code'] = coupon.code
+            
+            return JsonResponse({
+                'success': True,
+                'code': coupon.code,
+                'discount_percent': coupon.discount_percent,
+                'discount_amount': str(discount),
+                'new_total': str(new_total),
+                'message': f'Promo code {coupon.code} applied successfully!'
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+
+@login_required
+@require_POST
+def add_review(request):
+    product_id = request.POST.get('product_id')
+    product = get_object_or_404(Product, id=product_id)
+    rating = int(request.POST.get('rating', 5))
+    comment = request.POST.get('comment', '').strip()
+    
+    if not comment:
+        messages.error(request, "Review comment cannot be empty.")
+        return redirect('product_detail', slug=product.slug)
+        
+    if rating < 1 or rating > 5:
+        messages.error(request, "Rating must be between 1 and 5.")
+        return redirect('product_detail', slug=product.slug)
+        
+    try:
+        Review.objects.update_or_create(
+            product=product,
+            user=request.user,
+            defaults={'rating': rating, 'comment': comment}
+        )
+        messages.success(request, "Thank you! Your review has been submitted.")
+    except Exception as e:
+        messages.error(request, f"Failed to submit review: {str(e)}")
+        
+    return redirect('product_detail', slug=product.slug)
+

@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if active_category %}{{ active_category.name }}{% else %}Catalog{% endif %} | V-Tech Cyberstore{% endblock %}
+
+{% block content %}
+<div class="catalog-wrapper" style="max-width: 1300px; margin: 0 auto; padding: 0 15px;">
+    
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb-nav" style="margin-bottom: 24px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+        <a href="{% url 'home' %}" style="color: var(--text-secondary); text-decoration: none;"><i class="fa fa-home"></i></a>
+        <span style="color: var(--text-muted);">&gt;</span>
+        {% if active_category %}
+            <a href="{% url 'catalog' %}" style="color: var(--text-secondary); text-decoration: none;">Catalog</a>
+            <span style="color: var(--text-muted);">&gt;</span>
+            <span style="color: var(--accent-cyan); font-weight: 600;">{{ active_category.name }}</span>
+        {% else %}
+            <span style="color: var(--accent-cyan); font-weight: 600;">Catalog</span>
+        {% endif %}
+    </div>
+
+    <!-- BEST SELLERS / NEW ARRIVALS Slide Box Section -->
+    {% if best_sellers %}
+    <section class="best-sellers-slider-section" style="margin-bottom: 40px; background: #ffffff; border: 1px solid var(--glass-border); border-radius: var(--border-radius-md); padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+        <div style="display: flex; gap: 24px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 24px;">
+            <h2 class="active-tab-title" style="font-size: 16px; font-weight: 800; color: var(--accent-cyan); border-bottom: 3px solid var(--accent-cyan); margin-bottom: -15px; padding-bottom: 12px; text-transform: uppercase;">Best Sellers</h2>
+            <h2 style="font-size: 16px; font-weight: 600; color: var(--text-muted); cursor: pointer; text-transform: uppercase;">New Arrivals</h2>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px;">
+            {% for product in best_sellers %}
+            <div class="featured-slide-card" style="display: flex; gap: 20px; align-items: center; background: #ffffff; border-radius: var(--border-radius-sm); padding: 10px; position: relative;">
+                <!-- Discount tag -->
+                <span style="position: absolute; top: 10px; right: 10px; background: #16a34a; color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">-4%</span>
+                
+                <!-- Product Img Column -->
+                <div style="width: 180px; flex-shrink: 0; text-align: center;">
+                    <img src="{{ product.get_image_url }}" alt="{{ product.name }}" style="max-height: 140px; max-width: 100%; object-fit: contain;">
+                </div>
+                
+                <!-- Product Specs & Action Column -->
+                <div style="flex-grow: 1;">
+                    {% if product.brand %}
+                        <span style="font-size: 11px; font-weight: 700; color: #3b82f6; text-transform: uppercase; display: block; margin-bottom: 4px;">{{ product.brand }}</span>
+                    {% endif %}
+                    <h3 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 38px;">
+                        <a href="{% url 'product_detail' product.slug %}" style="text-decoration: none; color: inherit;">{{ product.name }}</a>
+                    </h3>
+                    
+                    <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 12px; color: #fbbf24; font-size: 12px;">
+                        <span>★★★★★</span>
+                        <span style="color: var(--text-muted); font-size: 11px; font-weight: 600;">(0.0)</span>
+                    </div>
+                    
+                    <!-- Progress bar (Stock Availability) -->
+                    <div style="margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-secondary); margin-bottom: 6px;">
+                            <span>Available: <strong>{{ product.stock }}</strong></span>
+                            <span>Sold: <strong>0</strong></span>
+                        </div>
+                        <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+                            <div style="width: {% if product.stock > 0 %}40%{% else %}0%{% endif %}; height: 100%; background: #16a34a; border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 18px; font-weight: 800; color: var(--text-primary);">${{ product.price }}</span>
+                            <span style="font-size: 12px; color: var(--text-muted); text-decoration: line-through;">${{ product.price }}</span>
+                        </div>
+                        {% if product.stock > 0 %}
+                            <button class="btn btn-primary" onclick="addToCart({{ product.id }})" style="padding: 8px 16px; font-size: 12.5px; border-radius: 20px; text-transform: uppercase; background: #ffffff; border: 1.5px solid #d1d5db; color: #475569; font-weight: 700; transition: var(--transition-smooth); cursor: pointer;" onmouseover="this.style.background='#0b4c8c'; this.style.borderColor='#0b4c8c'; this.style.color='#ffffff';" onmouseout="this.style.background='#ffffff'; this.style.borderColor='#d1d5db'; this.style.color='#475569';">Add to Cart</button>
+                        {% else %}
+                            <button class="btn btn-secondary" disabled style="padding: 8px 16px; font-size: 12.5px; border-radius: 20px;">Sold Out</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- REFINE SEARCH Section -->
+    <section class="refine-search-section" style="margin-bottom: 40px;">
+        <h3 style="font-size: 14.5px; font-weight: 800; color: var(--text-primary); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">Refine Search</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px;">
+            {% for cat in categories %}
+            <a href="{% url 'catalog' %}?category={{ cat.slug }}" class="glass-card refine-card" style="display: flex; flex-direction: column; align-items: center; padding: 20px; text-decoration: none; border-radius: var(--border-radius-sm); border: 1px solid var(--glass-border); transition: var(--transition-smooth); background: #ffffff;">
+                <div style="width: 60px; height: 60px; border-radius: 50%; background: #f8fafc; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: var(--accent-cyan); font-size: 24px; transition: var(--transition-smooth);">
+                    {% if cat.slug == 'laptops' %}
+                        <i class="fa fa-laptop"></i>
+                    {% elif cat.slug == 'desktops' %}
+                        <i class="fa fa-desktop"></i>
+                    {% elif cat.slug == 'gpus' or cat.slug == 'cpus' %}
+                        <i class="fa fa-microchip"></i>
+                    {% elif cat.slug == 'monitors' %}
+                        <i class="fa fa-tv"></i>
+                    {% elif cat.slug == 'accessories' %}
+                        <i class="fa fa-keyboard"></i>
+                    {% else %}
+                        <i class="fa fa-database"></i>
+                    {% endif %}
+                </div>
+                <span class="refine-name" style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); text-align: center; margin-bottom: 4px;">
+                    {% if cat.slug == 'gpus' %}
+                        CPUs & GPUs
+                    {% else %}
+                        {{ cat.name }}
+                    {% endif %}
+                </span>
+                <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">({{ cat.product_count|default:"0" }})</span>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Main Catalog View -->
+    <div class="catalog-layout" style="display: grid; grid-template-columns: 1fr; gap: 32px; padding: 0;">
+        <section style="width: 100%;">
+            
+            <!-- Toolbar: Grid selection & Sort drop boxes -->
+            <div class="catalog-toolbar" style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; border: 1px solid var(--glass-border); padding: 12px 18px; border-radius: var(--border-radius-sm); margin-bottom: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <button class="btn" style="background: #f1f5f9; border: 1px solid #d1d5db; color: #475569; padding: 6px 12px; font-size: 12px; font-weight: 700; border-radius: 4px; text-transform: uppercase;"><i class="fa fa-sliders" style="margin-right: 6px;"></i> Sidebar</button>
+                    
+                    <!-- Column Switches -->
+                    <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #475569;" class="hidden-mobile">
+                        <span>Grid View:</span>
+                        <button class="grid-col-btn" data-cols="2" style="background: #ffffff; border: 1px solid #d1d5db; width: 28px; height: 28px; border-radius: 4px; font-weight: 700; cursor: pointer;">2</button>
+                        <button class="grid-col-btn" data-cols="3" style="background: #ffffff; border: 1px solid #d1d5db; width: 28px; height: 28px; border-radius: 4px; font-weight: 700; cursor: pointer;">3</button>
+                        <button class="grid-col-btn" data-cols="4" style="background: #ffffff; border: 1px solid #d1d5db; width: 28px; height: 28px; border-radius: 4px; font-weight: 700; cursor: pointer;">4</button>
+                        <button class="grid-col-btn active" data-cols="5" style="background: #16a34a; border: 1px solid #16a34a; color: white; width: 28px; height: 28px; border-radius: 4px; font-weight: 700; cursor: pointer;">5</button>
+                        <button class="grid-col-btn" style="background: #ffffff; border: 1px solid #d1d5db; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;"><i class="fa fa-list" style="font-size: 11px;"></i></button>
+                        <button class="grid-col-btn" style="background: #ffffff; border: 1px solid #d1d5db; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;"><i class="fa fa-th-large" style="font-size: 11px;"></i></button>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 14px; font-size: 12px; color: #475569;">
+                    <div>
+                        <span style="margin-right: 6px; font-weight: 600;">Sort By:</span>
+                        <select class="form-input" style="padding: 6px 12px; margin-bottom: 0; width: 120px; font-size: 12.5px; border: 1px solid #d1d5db; border-radius: 4px; display: inline-block;">
+                            <option>Default</option>
+                            <option>Price (Low &gt; High)</option>
+                            <option>Price (High &gt; Low)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span style="margin-right: 6px; font-weight: 600;">Show:</span>
+                        <select class="form-input" style="padding: 6px 12px; margin-bottom: 0; width: 70px; font-size: 12.5px; border: 1px solid #d1d5db; border-radius: 4px; display: inline-block;">
+                            <option>10</option>
+                            <option>25</option>
+                            <option>50</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products Grid (Cols-5 by Default) -->
+            <div class="products-grid cols-5" id="products-grid">
+                {% for product in products %}
+                    <div class="glass-card product-card" style="background: #ffffff; border: 1px solid var(--glass-border); padding: 16px; border-radius: var(--border-radius-sm); position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 380px;">
+                        
+                        <!-- Top details: Brand image/name at top-right -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <span class="stock-badge {% if product.stock > 0 %}stock-in{% else %}stock-out{% endif %}" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 2px;">
+                                {% if product.stock > 0 %}IN STOCK{% else %}OUT OF STOCK{% endif %}
+                            </span>
+                            {% if product.brand %}
+                                <span style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #e2e8f0; padding: 1px 5px; border-radius: 2px; background: #f8fafc;">{{ product.brand }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Image Container -->
+                        <div class="product-img-wrapper" style="text-align: center; margin-bottom: 12px; height: 150px; display: flex; align-items: center; justify-content: center;">
+                            <img src="{{ product.get_image_url }}" alt="{{ product.name }}" class="product-img" style="max-height: 130px; max-width: 100%; object-fit: contain;">
+                        </div>
+                        
+                        <!-- Card Body Details -->
+                        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <a href="{% url 'product_detail' product.slug %}">
+                                    <h3 class="product-title" style="font-size: 13px; font-weight: 700; color: var(--text-primary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; height: 54px; margin-bottom: 8px;">{{ product.name }}</h3>
+                                </a>
+                                
+                                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 12px; color: #fbbf24; font-size: 11px;">
+                                    <span>★★★★★</span>
+                                    <span style="color: var(--text-muted); font-size: 10.5px; font-weight: 600;">({{ product.average_rating|default:"0.0" }})</span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid #f1f5f9; margin-top: 8px;">
+                                <span class="product-price" style="font-size: 15.5px; font-weight: 800; color: var(--text-primary);">${{ product.price }}</span>
+                                {% if product.stock > 0 %}
+                                    <button class="btn btn-primary" onclick="addToCart({{ product.id }})" style="padding: 6px 8px; font-size: 10px; border-radius: 4px; background: #ffffff; border: 1.5px solid #d1d5db; color: #475569; font-weight: 700; white-space: nowrap;" onmouseover="this.style.background='#0b4c8c'; this.style.borderColor='#0b4c8c'; this.style.color='#ffffff';" onmouseout="this.style.background='#ffffff'; this.style.borderColor='#d1d5db'; this.style.color='#475569';">ADD TO CART</button>
+                                {% else %}
+                                    <button class="btn btn-secondary" disabled style="padding: 6px 8px; font-size: 10px; border-radius: 4px; white-space: nowrap;">SOLD OUT</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 0; color: var(--text-muted);">
+                        <p style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">No products found</p>
+                        <p style="font-size: 14px;">Try adjusting your filters or search keywords.</p>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination Controls row -->
+            <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--glass-border); padding-top: 24px; margin-top: 40px; font-size: 13px; color: var(--text-secondary);">
+                <div style="display: flex; gap: 6px;">
+                    <span class="page-num active" style="background: #2563eb; color: white; width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 700;">1</span>
+                    <span class="page-num" style="background: #ffffff; border: 1px solid #d1d5db; width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer;">2</span>
+                    <span class="page-num" style="background: #ffffff; border: 1px solid #d1d5db; width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer;">3</span>
+                    <span class="page-num" style="background: #ffffff; border: 1px solid #d1d5db; width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer;">4</span>
+                    <span class="page-num" style="background: #ffffff; border: 1px solid #d1d5db; width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer;">&gt;</span>
+                    <span class="page-num" style="background: #ffffff; border: 1px solid #d1d5db; width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer;">&gt;|</span>
+                </div>
+                <div style="font-weight: 600; color: var(--text-muted);">
+                    Showing 1 to 10 of {{ products.count }} (1 Pages)
+                </div>
+            </div>
+            
+        </section>
+    </div>
+</div>
+
+<!-- Green Guarantee trust ribbons bar -->
+<div class="green-trust-bar" style="background: #16a34a; padding: 24px 0; margin-top: 60px; color: #ffffff;">
+    <div class="container" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <i class="fa fa-rocket" style="font-size: 32px; color: #ffffff;"></i>
+            <div>
+                <h4 style="font-size: 13.5px; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">Free Shipping & Return</h4>
+                <p style="font-size: 11.5px; color: rgba(255,255,255,0.85); margin: 0;">Free shipping on orders over $49</p>
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <i class="fa fa-hand-holding-dollar" style="font-size: 32px; color: #ffffff;"></i>
+            <div>
+                <h4 style="font-size: 13.5px; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">Money Guarantee</h4>
+                <p style="font-size: 11.5px; color: rgba(255,255,255,0.85); margin: 0;">30 days money back guarantee</p>
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <i class="fa fa-user-gear" style="font-size: 32px; color: #ffffff;"></i>
+            <div>
+                <h4 style="font-size: 13.5px; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">Online Support</h4>
+                <p style="font-size: 11.5px; color: rgba(255,255,255,0.85); margin: 0;">We support online 24/24 on day</p>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <i class="fa fa-gift" style="font-size: 32px; color: #ffffff;"></i>
+            <div>
+                <h4 style="font-size: 13.5px; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">Gift Promotion</h4>
+                <p style="font-size: 11.5px; color: rgba(255,255,255,0.85); margin: 0;">Special gifts with custom rigs</p>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <i class="fa fa-credit-card" style="font-size: 32px; color: #ffffff;"></i>
+            <div>
+                <h4 style="font-size: 13.5px; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">Payment Method</h4>
+                <p style="font-size: 11.5px; color: rgba(255,255,255,0.85); margin: 0;">Support Cash On Delivery & ABA</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

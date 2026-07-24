@@ -1,62 +1,134 @@
-# SYSTEM DOCUMENTATION: CYBERSTORE COMPUTER SHOP
-**SETEC INSTITUTE**  
-**MANAGEMENT INFORMATION SYSTEM**  
-**GROUP: PY-DJANGO-SU2**  
-**Topic:** Cyberstore E-Commerce Platform  
-**Subject:** Full-Stack Web Development II (Python & Django)  
+# SYSTEM DOCUMENTATION & PRESENTATION GUIDE: CYBERSTORE
+**SETEC INSTITUTE** | **MANAGEMENT INFORMATION SYSTEM**  
+**GROUP: PY-DJANGO-SU2** | **Topic:** Cyberstore E-Commerce Platform  
+**Subject:** Full-Stack Web Development II (Python & Django)
 
 ---
 
-## Table of Contents
-1. [Introduction](#i-introduction)
-2. [System Requirements](#ii-system-requirements)
-3. [Economic Feasibility](#iii-economic-feasibility)
-4. [Function and Task Breakdown](#iv-function-and-task-breakdown)
-5. [Data Flow Diagram](#v-data-flow-diagram)
-6. [Entity Relationship Diagram](#vi-entity-relationship-diagram)
-7. [Data Dictionary](#vii-data-dictionary)
-8. [User Interface Design](#viii-user-interface-design)
-9. [Test Cases](#ix-test-cases)
-10. [Product Backlog](#x-product-backlog)
-11. [Presentation Slides Guide](#xi-presentation-slides-guide)
+# PART I: PRESENTATION SLIDES (QUICK-PRESENT SUMMARY)
+*Use this section directly for your class presentation. Each slide is designed to be clear, visual, and easy to read.*
 
 ---
 
-## I. Introduction
-The **Cyberstore Computer Shop E-Commerce Platform** is a web-based full-stack application designed to streamline customer computer component browsing, live shopping cart transactions, order checkouts, and customer review submissions. It also integrates an administrative dashboard for shop managers to monitor financial metrics, update order states, and track hardware inventory warnings.
+## 📺 Slide 1: Project Overview & Core Mission
+* **Platform Name**: Cyberstore E-Commerce (Computer Shop)
+* **Design Reference**: Inspired by Cambodia’s premium hardware retailers (e.g. *vtech-computer.com*).
+* **The Goal**: Create a state-of-the-art e-commerce site for PC builders with dynamic frontend controls and a secure management dashboard.
+* **Key Features**:
+  * 🏷️ Hover mega-menus for categories.
+  * 🎛️ Dynamic 2, 3, 4, or 5-column grid layout switcher.
+  * 📈 Real-time inventory progress bars ("Available" vs. "Sold").
+  * 🎟️ Cart promo coupon code validation.
+  * 💬 Customer star ratings and text reviews feed.
 
-Drawing inspiration from Cambodian technology retailers like *vtech-computer.com*, the application delivers a premium, highly interactive client experience. It features vertical categories sidebars with responsive mega-menu panels, a multi-layout product grid, dynamic stock progress status meters, coupon discount validations, and a scale-zoomed product details viewport.
+---
 
-The application is built on a containerized environment using **Docker**, utilizing **Python & Django** for the backend engine and templating controllers, **PostgreSQL** as the relational database storage, and **Vanilla CSS & JS** for a modern user interface.
+## 📺 Slide 2: Tech Stack & System Architecture
+* **Container Environment**: Fully dockerized using `docker-compose`.
+* **Backend Engine**: **Python & Django** handling request routing, security, and views.
+* **Data Storage**: **PostgreSQL** relational database.
+* **UI Interface**: Custom **Vanilla CSS & JS** for fast, clean, and responsive interfaces.
+* **Architecture Diagram**:
+  *(A modern layout linking Web Clients, Docker Containers, PostgreSQL, and external services)*
+
+  ![System Architecture & Data Flow Diagram](static/images/system_architecture_diagram.png)
+
+---
+
+## 📺 Slide 3: Functional Scope (Who Can Do What?)
+* **1. Customer Experience**:
+  * Browse catalog with AJAX search (instant search filters without page refresh).
+  * Adjust card grids instantly via toolbar button togglers.
+  * Drag cart drawer slide-out, adjust item quantity, and apply active discount coupons.
+  * Place order via Cash on Delivery (COD) and view structured invoice receipts.
+  * Register, login, and submit star reviews/comments on products.
+* **2. Shop Manager Dashboard**:
+  * Monitor business revenue, total orders count, and pending orders.
+  * Receive visual warnings for low stock items (warnings for stock $\le$ 5).
+  * Process delivery states (Pending, Processing, Completed, Cancelled).
+
+---
+
+## 📺 Slide 4: Data Flow Diagram (DFD Level 0)
+* **Customer Client**: Browse items, add to cart, apply coupon, place order, and write reviews.
+* **Shop Manager**: View sales metric dashboards and update order delivery statuses.
+* **System Admin**: Manage catalog categories, product models, and coupon codes.
+
+```mermaid
+graph TD
+    Customer([Customer Client]) -->|1. Browse, Search & Layout Switch| System[Cyberstore Django System]
+    System -->|2. Inventory & Spec Cards| Customer
+    Customer -->|3. Add to Cart, Apply Coupon| System
+    System -->|4. Discount & Cart Items| Customer
+    Customer -->|5. Place Order & Write Review| System
+    System -->|6. Invoice Receipt & Reviews Feed| Customer
+    
+    Manager([Shop Manager]) -->|7. View Dashboard Metrics| System
+    System -->|8. Revenue & Stock Logs| Manager
+    Manager -->|9. Update Order Status| System
+```
+
+---
+
+## 📺 Slide 5: Database Relationship Diagram (ERD)
+* **Relational Schema**: 10 interconnected tables representing users, items, and transactions.
+* **Core Relations**:
+  * `Category` contains multiple `Products`.
+  * `User` places `Orders`, writes `Reviews`, and owns a `Cart`.
+  * `Cart` holds `CartItems`, `Order` holds `OrderItems`.
+  * `Coupon` applies percentage discounts to orders.
+
+  ![Database Entity Relationship Diagram](static/images/database_erd_diagram.png)
+
+---
+
+## 📺 Slide 6: Economic Feasibility & Cost Breakdown
+* **Development Budget**: Est. **$3,730** total (salaries, EC2/RDS deployment, SSL security domain certificates, utilities).
+* **Hardware Requirements**: Minimum 2 Cores CPU, 4 GB RAM, 40 GB SSD storage, Docker runtime.
+* **Timeline & Sprints**:
+  * **Sprint 1**: Product filters, category menus, and interactive AJAX cart drawer.
+  * **Sprint 2**: Cash on Delivery checkout, customer profile registration, and dashboard revenue logs.
+  * **Sprint 3**: Promo coupons discount engine, product reviews, and grid layout switcher.
+
+---
+
+## 📺 Slide 7: Quality Assurance & Test Verification
+* **Test Automation**: 9 unit tests checking cart subtotals, catalog rendering, coupon discounts, order creation, reviews saving, and manager dashboard locks.
+* **Result**: **100% PASS** on all test cases!
+* **Robust Verification**: Tested in isolated test databases before production build.
+
+---
+
+# PART II: COMPREHENSIVE TECHNICAL REFERENCE
 
 ---
 
 ## II. System Requirements
 
 ### 1. Functional Scope by User Roles
-*   **Customer (Anonymous or Authenticated):**
-    *   Browse and search products via dynamic AJAX filtering (without page reloads).
-    *   Adjust product catalog layouts on-the-fly using 2, 3, 4, or 5-column grid selectors.
-    *   View product specifications, average star ratings, stock availability, and client review feeds.
-    *   Add items, update quantities, or delete items in the interactive sliding cart drawer.
-    *   Apply promotional coupon codes (e.g. `CYBERGPU`, `CYBER10`) to calculate cart discounts.
-    *   Checkout order using Cash on Delivery (COD) and receive a structured order invoice.
-    *   Create accounts, manage billing profiles, and submit ratings/reviews on purchased products.
-*   **Shop Manager:**
-    *   Access the secure custom Management Dashboard.
-    *   View sales metrics (Total Revenue from completed orders, total orders, pending orders).
-    *   Monitor low stock items (warnings for products with stock levels $\le$ 5).
-    *   Process client orders and modify delivery statuses (Pending, Processing, Completed, Cancelled).
-*   **IT Support / System Administrator:**
-    *   Access Django's built-in Admin panel.
-    *   Run migrations, handle database configuration, and manage product listings and categories.
+* **Customer (Anonymous or Authenticated):**
+  * Browse and search products via dynamic AJAX filtering (without page reloads).
+  * Adjust product catalog layouts on-the-fly using 2, 3, 4, or 5-column grid selectors.
+  * View product specifications, average star ratings, stock availability, and client review feeds.
+  * Add items, update quantities, or delete items in the interactive sliding cart drawer.
+  * Apply promotional coupon codes (e.g. `CYBERGPU`, `CYBER10`) to calculate cart discounts.
+  * Checkout order using Cash on Delivery (COD) and receive a structured order invoice.
+  * Create accounts, manage billing profiles, and submit ratings/reviews on purchased products.
+* **Shop Manager:**
+  * Access the secure custom Management Dashboard.
+  * View sales metrics (Total Revenue from completed orders, total orders, pending orders).
+  * Monitor low stock items (warnings for products with stock levels $\le$ 5).
+  * Process client orders and modify delivery statuses (Pending, Processing, Completed, Cancelled).
+* **IT Support / System Administrator:**
+  * Access Django's built-in Admin panel.
+  * Run migrations, handle database configuration, and manage product listings and categories.
 
 ### 2. Non-Functional Scope
-1.  **Usability:** Highly responsive mobile-friendly theme styled with Outfit typography, clean grid cards, and transition effects.
-2.  **Performance:** AJAX-backed cart updates and product lookups with debounced key-event delays of 300ms.
-3.  **Security:** Django CSRF token middleware protection on all POST endpoints, and password encryption hashing.
-4.  **Scalability:** Separate containers for Web and DB services allow horizontal scaling.
-5.  **Availability:** Healthy health-checks for PostgreSQL containers, ensuring the web application is served continuously.
+1. **Usability**: Highly responsive mobile-friendly theme styled with Outfit typography, clean grid cards, and transition effects.
+2. **Performance**: AJAX-backed cart updates and product lookups with debounced key-event delays of 300ms.
+3. **Security**: Django CSRF token middleware protection on all POST endpoints, and password encryption hashing.
+4. **Scalability**: Separate containers for Web and DB services allow horizontal scaling.
+5. **Availability**: Healthy health-checks for PostgreSQL containers, ensuring the web application is served continuously.
 
 ---
 
@@ -105,32 +177,7 @@ The application is built on a containerized environment using **Docker**, utiliz
 
 ---
 
-## V. Data Flow Diagram
-
-### 1. System Architecture & DFD Infographic
-Below is the visual system architecture and data flow infographic illustrating the containerized frontend-backend architecture.
-
-![System Architecture & Data Flow Diagram](static/images/system_architecture_diagram.png)
-
-### 2. LEVEL 0 - Global Data Flows
-```mermaid
-graph TD
-    Customer([Customer Client]) -->|1. Browse, Search & Layout Switch| System[Cyberstore Django System]
-    System -->|2. Inventory & Spec Cards| Customer
-    Customer -->|3. Add to Cart, Apply Coupon| System
-    System -->|4. Discount & Cart Items| Customer
-    Customer -->|5. Place Order & Write Review| System
-    System -->|6. Invoice Receipt & Reviews Feed| Customer
-    
-    Manager([Shop Manager]) -->|7. View Dashboard Metrics| System
-    System -->|8. Revenue & Stock Logs| Manager
-    Manager -->|9. Update Order Status| System
-    
-    Admin([Sys Admin]) -->|10. Manage Category/Product/Coupon| System
-    System -->|11. Admin Database CRUD| DB[(PostgreSQL Database)]
-```
-
-### 3. LEVEL 1 - Customer Cart, Checkout & Review Data Flow
+## V. Data Flow Diagrams (Detailed Level 1)
 ```mermaid
 graph TD
     Client([Customer Client]) -->|Query Search| SearchService[Search & Catalog Engine]
@@ -158,14 +205,7 @@ graph TD
 
 ---
 
-## VI. Entity Relationship Diagram
-
-### 1. Database Entity Schema
-Below is the database Entity Relationship Diagram detailing primary/foreign key connections.
-
-![Database Entity Relationship Diagram](static/images/database_erd_diagram.png)
-
-### 2. Data Entity Structure
+## VI. Database Relational Structure
 ```mermaid
 erDiagram
     User ||--o1 UserProfile : "has profile"
@@ -395,15 +435,15 @@ Holds star ratings and comments left by customers.
 ## VIII. User Interface Design
 
 ### 1. Theme Configuration (Vanilla CSS Settings)
-*   **Colors:** Cyberstore base theme balances high-contrast white card modules (`#ffffff`) and dark-navy banners (`#0d2137`) for a professional premium look. Green accent highlights (`#16a34a`), red brand flags (`#dc2626`), and orange hot deals badges (`#ea580c`) are utilized.
-*   **Typography:** Google Font **Outfit** is loaded globally for all headings, pricing tables, and UI cards.
-*   **Grid Systems:** Column variables switch cards dynamically. The product showcase grid transitions smoothly from two columns up to five columns depending on toolbar selector states.
+* **Colors**: Cyberstore base theme balances high-contrast white card modules (`#ffffff`) and dark-navy banners (`#0d2137`) for a professional premium look. Green accent highlights (`#16a34a`), red brand flags (`#dc2626`), and orange hot deals badges (`#ea580c`) are utilized.
+* **Typography**: Google Font **Outfit** is loaded globally for all headings, pricing tables, and UI cards.
+* **Grid Systems**: Column variables switch cards dynamically. The product showcase grid transitions smoothly from two columns up to five columns depending on toolbar selector states.
 
 ### 2. Client Pages & Manager Panels
-*   **Navigation Mega-Menu:** Features a vertical category drawer mapping Desktops, Laptops, CPUs, GPUs, RAM, Monitors, Accessories, and Storage. Hovering on categories expands structured fly-out mega menus detailing subcategories and tech brands.
-*   **Dynamic Catalog Grid:** Integrates grid column selectors (`2`, `3`, `4`, `5`), page sizes dropdown options, search keyword AJAX filters, and an inventory progress meter indicating stock levels and sold ratios.
-*   **Redesigned Details page:** Incorporates a horizontal two-column split. The left holds product image viewpoints and gallery selectors. The right structures dynamic specifications, fire stickers, +/- quantity button toggles, cart buttons, and reviews feed cards.
-*   **Checkout & Success Form:** Cart Drawer slides out from the right showing active coupon discount fields. Checkout pages detail custom invoice receipts upon Cash on Delivery completion.
+* **Navigation Mega-Menu**: Features a vertical category drawer mapping Desktops, Laptops, CPUs, GPUs, RAM, Monitors, Accessories, and Storage. Hovering on categories expands structured fly-out mega menus detailing subcategories and tech brands.
+* **Dynamic Catalog Grid**: Integrates grid column selectors (`2`, `3`, `4`, `5`), page sizes dropdown options, search keyword AJAX filters, and an inventory progress meter indicating stock levels and sold ratios.
+* **Redesigned Details page**: Incorporates a horizontal two-column split. The left holds product image viewpoints and gallery selectors. The right structures dynamic specifications, fire stickers, +/- quantity button toggles, cart buttons, and reviews feed cards.
+* **Checkout & Success Form**: Cart Drawer slides out from the right showing active coupon discount fields. Checkout pages detail custom invoice receipts upon Cash on Delivery completion.
 
 ---
 
@@ -442,44 +482,3 @@ Holds star ratings and comments left by customers.
 | **8** | As a **Customer**, I want to apply promotional discount coupons to my cart. | 5 | Medium | 3 | Completed |
 | **9** | As a **Customer**, I want to review and rate hardware components I've bought. | 5 | Medium | 3 | Completed |
 | **10**| As a **Customer**, I want to adjust product layout columns dynamically. | 3 | Low | 3 | Completed |
-
----
-
-## XI. Presentation Slides Guide
-This section provides a structured guide designed for an executive pitch deck or school presentation of the Cyberstore platform.
-
-### Slide 1: Project Overview & Core Mission
-*   **Topic Title**: Cyberstore Computer Shop E-Commerce Platform
-*   **Target Market Reference**: Cambodian retail computer systems (inspired by V-Tech Computer Cambodia).
-*   **Key Focus**: Premium high-performance user experience, fast responsive filters, dynamic grid view columns, structured specifications lists, active stock status meters, promo coupons, and customer feedback.
-*   **Team Composition**: SETEC Group `PY-DJANGO-SU2`.
-
-### Slide 2: Technology Architecture & Containers
-*   **Docker Containerization**:
-    *   `db` Service: PostgreSQL database container storing relational catalog, checkout, coupon, and review transaction schemas.
-    *   `web` Service: Django full-stack web container serving backend request routing and HTML templates.
-*   **Frontend Technologies**: Vanilla CSS grid rules & Outfit web fonts, dynamic AJAX JavaScript events (preventing performance reloads).
-
-### Slide 3: Functional System DFD Flow
-*   *Demonstrate DFD Infographic*: **[System DFD](static/images/system_architecture_diagram.png)**
-*   **Data flows explained**:
-    1.  *Customer Client*: Initiates AJAX catalog queries, stages shopping items, applies valid promo coupons, writes reviews, and places Cash on Delivery invoices.
-    2.  *Manager*: Views sales metrics summary widgets and modifies active order states via the custom manager dashboard panel.
-    3.  *Database (PostgreSQL)*: Persists entity records.
-
-### Slide 4: Database Schema Structure
-*   *Demonstrate ERD Diagram*: **[Database ERD Schema](static/images/database_erd_diagram.png)**
-*   **Key relationships**:
-    *   `Category` to `Product` (1-to-many relationship).
-    *   `Product` to `Review` & `CartItem` & `OrderItem` (1-to-many relationships).
-    *   `User` to `UserProfile` (1-to-1 relationship) and to `Cart` & `Order` & `Review` (1-to-many relationships).
-    *   `Coupon` to `Order` (1-to-many relationship).
-
-### Slide 5: Economic Feasibility & Timeline
-*   **Initial Budget**: $3,730 total cost (dev salaries, ec2/rds deployment instances, secure ssl certification).
-*   **Minimum Setup Specs**: 2 Cores CPU, 4 GB RAM, 40 GB storage, Ubuntu LTS.
-*   **Project Timeline / Task breakdown**: Iterative features built in 3 sprints (1. Core filters & cart, 2. COD & auth registries, 3. Coupons, reviews, and responsive CSS grids).
-
-### Slide 6: Quality Assurance & Testing
-*   **Unit Tests**: 9 robust automated Django test suites verifying model validations, cart price additions, JSON API responses, dashboard authentication redirects, order creation steps, and coupons deductions.
-*   **Result Status**: 100% successful test pass status.

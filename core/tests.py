@@ -216,3 +216,26 @@ class ComputerShopTests(TestCase):
         self.assertRedirects(response_del, '/dashboard/?tab=coupons')
         self.assertFalse(Coupon.objects.filter(code='NEW25').exists())
 
+    def test_manager_dashboard_additional_features(self):
+        manager = User.objects.create_user(username='mng_additional', password='password123')
+        profile = manager.profile
+        profile.is_manager = True
+        profile.save()
+        self.client.login(username='mng_additional', password='password123')
+        
+        response_csv = self.client.get(reverse('export_orders_csv'))
+        self.assertEqual(response_csv.status_code, 200)
+        self.assertEqual(response_csv['Content-Type'], 'text/csv')
+        self.assertIn('attachment; filename="cyberstore_orders.csv"', response_csv['Content-Disposition'])
+        
+        user = User.objects.create_user(username='reviewer_t', password='password123')
+        review = Review.objects.create(
+            product=self.product,
+            user=user,
+            rating=5,
+            comment="Excellent computer item."
+        )
+        response_review_del = self.client.get(reverse('delete_review', kwargs={'review_id': review.id}))
+        self.assertRedirects(response_review_del, '/dashboard/?tab=reviews')
+        self.assertFalse(Review.objects.filter(id=review.id).exists())
+

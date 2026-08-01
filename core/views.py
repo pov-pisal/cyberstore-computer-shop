@@ -381,6 +381,7 @@ def dashboard_view(request):
     users = User.objects.all().order_by('-date_joined')
     carts = Cart.objects.all().order_by('-id')
     coupons = Coupon.objects.all().order_by('-id')
+    reviews = Review.objects.all().order_by('-created_at')
     
     # Advanced Statistics
     completed_orders = Order.objects.filter(status='Completed')
@@ -430,6 +431,7 @@ def dashboard_view(request):
         'users': users,
         'carts': carts,
         'coupons': coupons,
+        'reviews': reviews,
         'total_revenue': total_revenue,
         'total_orders_count': total_orders_count,
         'pending_orders_count': pending_orders_count,
@@ -867,5 +869,50 @@ def track_order(request):
         'error': error,
         'order_id': order_id,
     })
+
+
+def export_orders_csv(request):
+    import csv
+    from django.http import HttpResponse
+    
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="cyberstore_orders.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Order ID', 'Recipient Name', 'Email', 'Phone', 'Address', 'City', 'Total Amount ($)', 'Discount ($)', 'Status', 'Paid Status', 'Created At'])
+    
+    orders = Order.objects.all().order_by('-created_at')
+    for o in orders:
+        writer.writerow([
+            o.id,
+            o.full_name,
+            o.email,
+            o.phone,
+            o.address,
+            o.city,
+            o.total_amount,
+            o.discount_amount,
+            o.status,
+            'Paid' if o.is_paid else 'Unpaid',
+            o.created_at.strftime('%Y-%m-%d %H:%M')
+        ])
+        
+    return response
+
+
+def delete_review(request, review_id):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    review = get_object_or_404(Review, id=review_id)
+    prod_name = review.product.name
+    review.delete()
+    messages.success(request, f"Review for product '{prod_name}' has been successfully deleted.")
+    return redirect('/dashboard/?tab=reviews')
 
 

@@ -34,4 +34,6 @@ urlpatterns = [
     path('dashboard/product/<int:product_id>/restock/', views.restock_product, name='restock_product'),
     path('dashboard/coupon/add/', views.add_coupon, name='add_coupon'),
     path('dashboard/coupon/<int:coupon_id>/delete/', views.delete_coupon, name='delete_coupon'),
+    path('dashboard/orders/export/', views.export_orders_csv, name='export_orders_csv'),
+    path('dashboard/review/<int:review_id>/delete/', views.delete_review, name='delete_review'),
 ]

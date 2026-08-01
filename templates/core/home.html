@@ -4,29 +4,83 @@
 {% block title %}Home | CYBERSTORE Computer Shop{% endblock %}
 
 {% block content %}
-<section class="hero" style="min-height: 480px;">
-    <div class="hero-content">
-        <h1>Upgrade Your <br><span>Digital Arsenal</span></h1>
-        <p>Premium PC components, custom-built desktop rigs, and high-performance gaming laptops. Engine-tuned for creators, developers, and gamers.</p>
-        <div style="display: flex; gap: 16px;">
-            <a href="{% url 'catalog' %}" class="btn btn-primary" style="padding: 14px 28px; font-size: 16px;">Explore Catalog</a>
-            <a href="{% url 'catalog' %}?category=desktops" class="btn btn-secondary" style="padding: 14px 28px; font-size: 16px;">Builds & Prebuilts</a>
+<section class="hero-carousel" style="position: relative; height: 500px; margin-bottom: 40px; overflow: hidden; border-radius: 8px;">
+    <!-- Slides Wrapper -->
+    <div class="carousel-inner" style="position: relative; width: 100%; height: 100%;">
+        <!-- Slide 1: Ultimate Hardware -->
+        <div class="carousel-slide" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0d2137 0%, #1e1b4b 100%); display: flex; align-items: center; padding: 0 60px; transition: opacity 0.6s ease; opacity: 1; z-index: 1;">
+            <div style="max-width: 600px; color: white;">
+                <span style="background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Hot Promotion</span>
+                <h1 style="font-size: 46px; font-weight: 900; margin: 16px 0; line-height: 1.1; font-family: 'Outfit', sans-serif;">NVIDIA GeForce <br><span style="color: #fbbf24;">RTX GPU Flash Sale</span></h1>
+                <p style="color: rgba(255,255,255,0.8); font-size: 15px; margin-bottom: 24px; line-height: 1.6;">Level up your desktop frame rates. Use coupon code <strong style="color: #fbbf24;">CYBERGPU</strong> at checkout to apply an instant 10% discount on all RTX graphics card models.</p>
+                <a href="{% url 'catalog' %}?q=RTX" class="btn btn-primary" style="padding: 12px 28px; background: #fbbf24; border-color: #fbbf24; color: black; font-weight: 800;">Shop GPUs Now</a>
+            </div>
+            <div class="hidden-mobile" style="margin-left: auto; position: relative;">
+                <div style="position: absolute; top: -50px; left: -50px; width: 300px; height: 300px; background: rgba(251,191,36,0.15); filter: blur(80px); border-radius: 50%;"></div>
+                <img src="https://assets.nvidia.com/image/upload/t_Settings_Product_Image,f_auto,q_auto/gputech/gpus/geforce-rtx-4090/geforce-rtx-4090-product-photo-001-back-facing.png" style="max-height: 320px; position: relative; z-index: 2; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.5)); max-width: 400px;" alt="RTX 4090">
+            </div>
+        </div>
+        
+        <!-- Slide 2: PC Builder -->
+        <div class="carousel-slide" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #090d16 0%, #0c2137 100%); display: flex; align-items: center; padding: 0 60px; transition: opacity 0.6s ease; opacity: 0; z-index: 0;">
+            <div style="max-width: 600px; color: white;">
+                <span style="background: #0b4c8c; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">PC Builder Tool</span>
+                <h1 style="font-size: 46px; font-weight: 900; margin: 16px 0; line-height: 1.1; font-family: 'Outfit', sans-serif;">Interactive <br><span style="color: #22c55e;">Custom PC Configurator</span></h1>
+                <p style="color: rgba(255,255,255,0.8); font-size: 15px; margin-bottom: 24px; line-height: 1.6;">Configure your dream computer component list (CPU, GPU, RAM, Storage), dynamically track socket compatibility, and sum up prices in real-time.</p>
+                <a href="{% url 'pc_builder' %}" class="btn btn-primary" style="padding: 12px 28px; background: #22c55e; border-color: #22c55e; color: white; font-weight: bold;">Launch Builder</a>
+            </div>
+            <div class="hidden-mobile" style="margin-left: auto; position: relative;">
+                <div style="position: absolute; top: -50px; left: -50px; width: 300px; height: 300px; background: rgba(34,197,94,0.15); filter: blur(80px); border-radius: 50%;"></div>
+                <i class="fa fa-screwdriver-wrench" style="font-size: 180px; color: rgba(255,255,255,0.15); position: relative; z-index: 2;"></i>
+            </div>
+        </div>
+
+        <!-- Slide 3: Repair Support -->
+        <div class="carousel-slide" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); display: flex; align-items: center; padding: 0 60px; transition: opacity 0.6s ease; opacity: 0; z-index: 0;">
+            <div style="max-width: 600px; color: white;">
+                <span style="background: #e2e8f0; color: #1f2937; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Store Services</span>
+                <h1 style="font-size: 46px; font-weight: 900; margin: 16px 0; line-height: 1.1; font-family: 'Outfit', sans-serif;">Professional <br><span style="color: #6366f1;">PC Diagnostic & Repair</span></h1>
+                <p style="color: rgba(255,255,255,0.8); font-size: 15px; margin-bottom: 24px; line-height: 1.6;">Our Phnom Penh technicians offer professional motherboard repair, thermal paste repasting, custom cable management, and hardware upgrades.</p>
+                <a href="{% url 'catalog' %}" class="btn btn-secondary" style="padding: 12px 28px; background: transparent; border-color: white; color: white; font-weight: bold;">Explore Details</a>
+            </div>
+            <div class="hidden-mobile" style="margin-left: auto; position: relative;">
+                <i class="fa fa-microchip" style="font-size: 180px; color: rgba(99,102,241,0.15); position: relative; z-index: 2;"></i>
+            </div>
         </div>
     </div>
     
-    <div class="hero-image">
-        <div class="hero-glow"></div>
-        <div class="glass-card hero-card" style="box-shadow: 0 8px 32px rgba(0,0,0,0.06); background: #ffffff;">
-            <svg width="64" height="64" fill="none" stroke="var(--accent-cyan)" viewBox="0 0 24 24" style="margin-bottom: 20px;">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
-            </svg>
-            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">Rig of the Month</h3>
-            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">The ultimate workstation featuring the latest RTX 4090 and Ryzen 9 processor.</p>
-            <div style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 20px;">$3,499.00</div>
-            <a href="/catalog/?q=RTX+4090" class="btn btn-primary" style="width: 100%;">View Details</a>
-        </div>
-    </div>
+    <!-- Left/Right Nav Arrows -->
+    <button onclick="prevSlide()" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.15); border: none; width: 44px; height: 44px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5;"><i class="fa fa-chevron-left"></i></button>
+    <button onclick="nextSlide()" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.15); border: none; width: 44px; height: 44px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5;"><i class="fa fa-chevron-right"></i></button>
 </section>
+
+<!-- Carousel Script -->
+<script>
+    let currentSlideIndex = 0;
+    const slides = document.querySelectorAll('.carousel-slide');
+    
+    function showSlide(index) {
+        slides.forEach(slide => {
+            slide.style.opacity = '0';
+            slide.style.zIndex = '0';
+        });
+        
+        currentSlideIndex = (index + slides.length) % slides.length;
+        slides[currentSlideIndex].style.opacity = '1';
+        slides[currentSlideIndex].style.zIndex = '1';
+    }
+    
+    function nextSlide() {
+        showSlide(currentSlideIndex + 1);
+    }
+    
+    function prevSlide() {
+        showSlide(currentSlideIndex - 1);
+    }
+    
+    // Auto-advance slide every 5 seconds
+    setInterval(nextSlide, 5000);
+</script>
 
 <!-- Promotional Banners Section -->
 <section style="padding: 40px 0; margin-bottom: 30px;">

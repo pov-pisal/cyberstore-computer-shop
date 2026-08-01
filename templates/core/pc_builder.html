@@ -25,6 +25,16 @@
         </div>
     </div>
 
+    <!-- Compatibility Status & Power Budget Info -->
+    <div id="compat-info-box" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; padding: 16px 24px; margin-bottom: 30px; font-size: 13.5px; color: #92400e;">
+        <h4 style="margin: 0 0 8px; font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; color: #78350f; font-family: 'Outfit', sans-serif;">
+            <i class="fa fa-circle-info" style="color: #d97706;"></i> Live Build Compatibility & PSU Advisor
+        </h4>
+        <ul id="compat-warnings-list" style="margin: 0; padding-left: 20px; line-height: 1.6; font-weight: 600;">
+            <!-- Dynamic warnings -->
+        </ul>
+    </div>
+
     <!-- Slots Table -->
     <div style="background: #ffffff; border: 1px solid var(--glass-border); border-radius: var(--border-radius-sm); box-shadow: 0 4px 12px rgba(0,0,0,0.02); overflow: hidden; margin-bottom: 40px;">
         <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
@@ -201,6 +211,7 @@ function selectProduct(category, productId, name, price, imageUrl) {
 
     closeModal(category);
     recalculateTotal();
+    runCompatibilityChecks();
 }
 
 function removePart(category) {
@@ -227,6 +238,7 @@ function removePart(category) {
     row.querySelector('.part-price-cell').textContent = '$0.00';
 
     recalculateTotal();
+    runCompatibilityChecks();
 }
 
 function recalculateTotal() {
@@ -235,6 +247,93 @@ function recalculateTotal() {
         total += parseFloat(el.value) || 0;
     });
     document.getElementById('total-build-cost').textContent = '$' + total.toFixed(2);
+}
+
+function runCompatibilityChecks() {
+    const cpuCell = document.getElementById('row-cpus').querySelector('.part-details-cell');
+    const ramCell = document.getElementById('row-ram').querySelector('.part-details-cell');
+    const gpuCell = document.getElementById('row-gpus').querySelector('.part-details-cell');
+    
+    const cpuName = cpuCell ? (cpuCell.querySelector('span')?.innerText || '') : '';
+    const ramName = ramCell ? (ramCell.querySelector('span')?.innerText || '') : '';
+    const gpuName = gpuCell ? (gpuCell.querySelector('span')?.innerText || '') : '';
+    
+    const compatBox = document.getElementById('compat-info-box');
+    const warningsList = document.getElementById('compat-warnings-list');
+    
+    if (!compatBox || !warningsList) return;
+    warningsList.innerHTML = '';
+    
+    let warnings = [];
+    let cpuSelected = cpuName !== '' && !cpuName.includes('No CPU component');
+    let ramSelected = ramName !== '' && !ramName.includes('No memory');
+    let gpuSelected = gpuName !== '' && !gpuName.includes('No graphics card');
+    
+    // 1. CPU vs RAM type check (DDR4 vs DDR5)
+    if (cpuSelected && ramSelected) {
+        const isRyzenAM5 = cpuName.includes('7600') || cpuName.includes('7700') || cpuName.includes('7800') || cpuName.includes('7900') || cpuName.includes('9900') || cpuName.includes('9700') || cpuName.includes('9600') || cpuName.includes('7950') || cpuName.includes('9950') || cpuName.toLowerCase().includes('ryzen 5 7') || cpuName.toLowerCase().includes('ryzen 7 7') || cpuName.toLowerCase().includes('ryzen 9 7');
+        const isDdr4 = ramName.toLowerCase().includes('ddr4');
+        
+        if (isRyzenAM5 && isDdr4) {
+            warnings.push("⚠️ **AMD Ryzen 7000/9000 Series CPU** requires **DDR5** RAM. The selected DDR4 memory will not fit AM5 socket motherboards.");
+        }
+    }
+    
+    // 2. Power Supply Advisor
+    if (cpuSelected || gpuSelected) {
+        let cpuWattage = 65;
+        if (cpuName.includes('i9') || cpuName.includes('9900') || cpuName.includes('7950') || cpuName.includes('9950') || cpuName.includes('13900') || cpuName.includes('14900')) {
+            cpuWattage = 170;
+        } else if (cpuName.includes('i7') || cpuName.includes('7900') || cpuName.includes('13700') || cpuName.includes('14700') || cpuName.includes('7800')) {
+            cpuWattage = 125;
+        }
+        
+        let gpuWattage = 0;
+        if (gpuSelected) {
+            if (gpuName.includes('4090') || gpuName.includes('3090') || gpuName.includes('7900 XTX')) {
+                gpuWattage = 450;
+            } else if (gpuName.includes('4080') || gpuName.includes('3080') || gpuName.includes('4070 Ti') || gpuName.includes('7900 XT')) {
+                gpuWattage = 320;
+            } else if (gpuName.includes('4070') || gpuName.includes('3070') || gpuName.includes('7800 XT')) {
+                gpuWattage = 220;
+            } else {
+                gpuWattage = 150;
+            }
+        }
+        
+        const totalEstPower = cpuWattage + gpuWattage + 50;
+        const recommendedPSU = Math.ceil((totalEstPower * 1.3) / 50) * 50;
+        
+        warnings.push("⚡ Estimated power draw: **" + totalEstPower + "W**. We recommend a Power Supply Unit (PSU) of at least **" + Math.max(550, recommendedPSU) + "W**.");
+    }
+    
+    if (warnings.length > 0) {
+        compatBox.style.display = 'block';
+        let hasError = warnings.some(w => w.includes('⚠️'));
+        if (hasError) {
+            compatBox.style.background = '#fef2f2';
+            compatBox.style.borderColor = '#fee2e2';
+            compatBox.style.color = '#991b1b';
+            compatBox.querySelector('h4').style.color = '#7f1d1d';
+            compatBox.querySelector('i').style.color = '#ef4444';
+            compatBox.querySelector('i').className = 'fa fa-circle-exclamation';
+        } else {
+            compatBox.style.background = '#f0fdf4';
+            compatBox.style.borderColor = '#dcfce7';
+            compatBox.style.color = '#166534';
+            compatBox.querySelector('h4').style.color = '#14532d';
+            compatBox.querySelector('i').style.color = '#22c55e';
+            compatBox.querySelector('i').className = 'fa fa-circle-check';
+        }
+        
+        warnings.forEach(w => {
+            const li = document.createElement('li');
+            li.innerHTML = w.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            warningsList.appendChild(li);
+        });
+    } else {
+        compatBox.style.display = 'none';
+    }
 }
 
 function resetBuilder() {

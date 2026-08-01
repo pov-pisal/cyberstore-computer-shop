@@ -268,3 +268,22 @@ class ComputerShopTests(TestCase):
         self.assertNotContains(response_it, "Manage Coupons")
         self.client.logout()
 
+    def test_admin_change_user_password(self):
+        admin_user = User.objects.create_user(username='admin_boss', password='password123')
+        admin_user.profile.role = 'admin'
+        admin_user.profile.is_manager = True
+        admin_user.profile.save()
+        
+        target_user = User.objects.create_user(username='john_doe', password='oldpassword')
+        
+        self.client.login(username='admin_boss', password='password123')
+        response = self.client.post(
+            reverse('change_user_password', kwargs={'user_id': target_user.id}),
+            {'new_password': 'newsecretpassword'}
+        )
+        self.assertRedirects(response, '/dashboard/?tab=users')
+        
+        self.client.logout()
+        login_success = self.client.login(username='john_doe', password='newsecretpassword')
+        self.assertTrue(login_success)
+

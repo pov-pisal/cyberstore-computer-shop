@@ -918,3 +918,22 @@ def delete_review(request, review_id):
     return redirect('/dashboard/?tab=reviews')
 
 
+@login_required
+def change_user_password(request, user_id):
+    if not is_manager(request.user) or request.user.profile.role != 'admin':
+        messages.error(request, "Access denied. Only System Admins can reset user passwords.")
+        return redirect('home')
+        
+    if request.method == 'POST':
+        target_user = get_object_or_404(User, id=user_id)
+        new_password = request.POST.get('new_password', '').strip()
+        if len(new_password) < 6:
+            messages.error(request, "Password must be at least 6 characters long.")
+        else:
+            target_user.set_password(new_password)
+            target_user.save()
+            messages.success(request, f"Password for user '{target_user.username}' has been updated successfully.")
+            
+    return redirect('/dashboard/?tab=users')
+
+

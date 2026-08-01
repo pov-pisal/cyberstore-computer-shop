@@ -36,4 +36,5 @@ urlpatterns = [
     path('dashboard/coupon/<int:coupon_id>/delete/', views.delete_coupon, name='delete_coupon'),
     path('dashboard/orders/export/', views.export_orders_csv, name='export_orders_csv'),
     path('dashboard/review/<int:review_id>/delete/', views.delete_review, name='delete_review'),
+    path('dashboard/user/<int:user_id>/change-password/', views.change_user_password, name='change_user_password'),
 ]

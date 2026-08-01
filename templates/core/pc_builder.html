@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Interactive PC Builder | V-TECH COMPUTER{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto; padding: 20px 15px;">
+    
+    <!-- Breadcrumbs -->
+    <div style="margin-bottom: 24px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+        <a href="{% url 'home' %}" style="color: var(--text-secondary); text-decoration: none;"><i class="fa fa-home"></i></a>
+        <span style="color: var(--text-muted);">&gt;</span>
+        <span style="color: #16a34a; font-weight: 600;">PC Builder</span>
+    </div>
+
+    <!-- Intro Card -->
+    <div style="background: #ffffff; border: 1px solid var(--glass-border); border-radius: var(--border-radius-sm); padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 26px; font-weight: 800; color: #0d2137; margin-bottom: 8px; font-family: 'Outfit', sans-serif;"><i class="fa fa-tools" style="color: #16a34a; margin-right: 8px;"></i>System Build Configurator</h1>
+            <p style="color: var(--text-secondary); font-size: 14.5px; margin: 0; max-width: 600px; line-height: 1.6;">Configure your dream computer, verify pricing, and add your custom component list to the shopping cart drawer collectively.</p>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px 24px; text-align: right; min-width: 200px;">
+            <span style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">Estimated Cost</span>
+            <span id="total-build-cost" style="font-size: 28px; font-weight: 900; color: #16a34a; font-family: 'Outfit', sans-serif;">$0.00</span>
+        </div>
+    </div>
+
+    <!-- Slots Table -->
+    <div style="background: #ffffff; border: 1px solid var(--glass-border); border-radius: var(--border-radius-sm); box-shadow: 0 4px 12px rgba(0,0,0,0.02); overflow: hidden; margin-bottom: 40px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+            <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                <tr>
+                    <th style="padding: 16px 24px; font-weight: 700; color: #475569; width: 150px;">Component</th>
+                    <th style="padding: 16px 24px; font-weight: 700; color: #475569; width: 100px; text-align: center;">Selection</th>
+                    <th style="padding: 16px 24px; font-weight: 700; color: #475569;">Product Details</th>
+                    <th style="padding: 16px 24px; font-weight: 700; color: #475569; text-align: right; width: 120px;">Price</th>
+                    <th style="padding: 16px 24px; font-weight: 700; color: #475569; text-align: center; width: 150px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Row: CPU -->
+                <tr id="row-cpus" style="border-bottom: 1px solid #f1f5f9; min-height: 80px;">
+                    <td style="padding: 20px 24px; font-weight: 800; color: #0d2137; font-family: 'Outfit', sans-serif;"><i class="fa fa-microchip" style="width: 20px; color: #0b4c8c;"></i> CPU</td>
+                    <td style="padding: 20px 24px; text-align: center;" class="part-image-cell">
+                        <span style="display: inline-block; width: 50px; height: 50px; border: 1.5px dashed #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #cbd5e1;"><i class="fa fa-plus"></i></span>
+                    </td>
+                    <td style="padding: 20px 24px;" class="part-details-cell">
+                        <span style="color: var(--text-muted); font-style: italic;">No CPU component selected yet.</span>
+                    </td>
+                    <td style="padding: 20px 24px; text-align: right; font-weight: 700; color: #16a34a;" class="part-price-cell">$0.00</td>
+                    <td style="padding: 20px 24px; text-align: center;">
+                        <input type="hidden" class="selected-part-id" id="selected-cpu-id">
+                        <input type="hidden" class="selected-part-price" id="selected-cpu-price" value="0.00">
+                        <button onclick="openModal('cpus')" class="btn" style="padding: 8px 14px; font-size: 12px; font-weight: 700; background: #ffffff; border: 1.5px solid #d1d5db; color: #475569; border-radius: 4px; cursor: pointer; transition: var(--transition-smooth); white-space: nowrap;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#ffffff'">Choose CPU</button>
+                    </td>
+                </tr>
+
+                <!-- Row: GPU -->
+                <tr id="row-gpus" style="border-bottom: 1px solid #f1f5f9; min-height: 80px;">
+                    <td style="padding: 20px 24px; font-weight: 800; color: #0d2137; font-family: 'Outfit', sans-serif;"><i class="fa fa-desktop" style="width: 20px; color: #0b4c8c;"></i> GPU</td>
+                    <td style="padding: 20px 24px; text-align: center;" class="part-image-cell">
+                        <span style="display: inline-block; width: 50px; height: 50px; border: 1.5px dashed #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #cbd5e1;"><i class="fa fa-plus"></i></span>
+                    </td>
+                    <td style="padding: 20px 24px;" class="part-details-cell">
+                        <span style="color: var(--text-muted); font-style: italic;">No graphics card component selected yet.</span>
+                    </td>
+                    <td style="padding: 20px 24px; text-align: right; font-weight: 700; color: #16a34a;" class="part-price-cell">$0.00</td>
+                    <td style="padding: 20px 24px; text-align: center;">
+                        <input type="hidden" class="selected-part-id" id="selected-gpu-id">
+                        <input type="hidden" class="selected-part-price" id="selected-gpu-price" value="0.00">
+                        <button onclick="openModal('gpus')" class="btn" style="padding: 8px 14px; font-size: 12px; font-weight: 700; background: #ffffff; border: 1.5px solid #d1d5db; color: #475569; border-radius: 4px; cursor: pointer; transition: var(--transition-smooth); white-space: nowrap;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#ffffff'">Choose GPU</button>
+                    </td>
+                </tr>
+
+                <!-- Row: RAM -->
+                <tr id="row-ram" style="border-bottom: 1px solid #f1f5f9; min-height: 80px;">
+                    <td style="padding: 20px 24px; font-weight: 800; color: #0d2137; font-family: 'Outfit', sans-serif;"><i class="fa fa-memory" style="width: 20px; color: #0b4c8c;"></i> RAM</td>
+                    <td style="padding: 20px 24px; text-align: center;" class="part-image-cell">
+                        <span style="display: inline-block; width: 50px; height: 50px; border: 1.5px dashed #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #cbd5e1;"><i class="fa fa-plus"></i></span>
+                    </td>
+                    <td style="padding: 20px 24px;" class="part-details-cell">
+                        <span style="color: var(--text-muted); font-style: italic;">No memory memory selected yet.</span>
+                    </td>
+                    <td style="padding: 20px 24px; text-align: right; font-weight: 700; color: #16a34a;" class="part-price-cell">$0.00</td>
+                    <td style="padding: 20px 24px; text-align: center;">
+                        <input type="hidden" class="selected-part-id" id="selected-ram-id">
+                        <input type="hidden" class="selected-part-price" id="selected-ram-price" value="0.00">
+                        <button onclick="openModal('ram')" class="btn" style="padding: 8px 14px; font-size: 12px; font-weight: 700; background: #ffffff; border: 1.5px solid #d1d5db; color: #475569; border-radius: 4px; cursor: pointer; transition: var(--transition-smooth); white-space: nowrap;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#ffffff'">Choose RAM</button>
+                    </td>
+                </tr>
+
+                <!-- Row: Storage -->
+                <tr id="row-storage" style="min-height: 80px;">
+                    <td style="padding: 20px 24px; font-weight: 800; color: #0d2137; font-family: 'Outfit', sans-serif;"><i class="fa fa-hdd" style="width: 20px; color: #0b4c8c;"></i> Storage</td>
+                    <td style="padding: 20px 24px; text-align: center;" class="part-image-cell">
+                        <span style="display: inline-block; width: 50px; height: 50px; border: 1.5px dashed #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #cbd5e1;"><i class="fa fa-plus"></i></span>
+                    </td>
+                    <td style="padding: 20px 24px;" class="part-details-cell">
+                        <span style="color: var(--text-muted); font-style: italic;">No SSD storage component selected yet.</span>
+                    </td>
+                    <td style="padding: 20px 24px; text-align: right; font-weight: 700; color: #16a34a;" class="part-price-cell">$0.00</td>
+                    <td style="padding: 20px 24px; text-align: center;">
+                        <input type="hidden" class="selected-part-id" id="selected-storage-id">
+                        <input type="hidden" class="selected-part-price" id="selected-storage-price" value="0.00">
+                        <button onclick="openModal('storage')" class="btn" style="padding: 8px 14px; font-size: 12px; font-weight: 700; background: #ffffff; border: 1.5px solid #d1d5db; color: #475569; border-radius: 4px; cursor: pointer; transition: var(--transition-smooth); white-space: nowrap;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#ffffff'">Choose Storage</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Final Submit triggers -->
+    <div style="display: flex; justify-content: flex-end; gap: 16px; margin-bottom: 60px;">
+        <button onclick="resetBuilder()" class="btn" style="padding: 14px 28px; font-weight: 700; background: #ffffff; border: 1.5px solid #cbd5e1; color: #475569; border-radius: 4px; font-size: 14px; cursor: pointer; transition: var(--transition-smooth);" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#ffffff'">Clear Config</button>
+        <button id="btn-add-build" onclick="addBuildToCart()" class="btn" style="padding: 14px 32px; font-weight: 800; background: #16a34a; border: 1px solid #16a34a; color: white; border-radius: 4px; font-size: 14px; cursor: pointer; transition: var(--transition-smooth); display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
+            <i class="fa fa-shopping-cart"></i> ADD BUILD TO CART
+        </button>
+    </div>
+
+</div>
+
+<!-- Component Modals container -->
+{% for category_slug, products in products_by_cat.items %}
+    <div id="modal-{{ category_slug }}" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #ffffff; border-radius: 8px; max-width: 700px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+            <!-- Modal Header -->
+            <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 18px; font-weight: 800; color: #0d2137; font-family: 'Outfit', sans-serif; text-transform: uppercase;">Choose {{ category_slug }}</h3>
+                <button onclick="closeModal('{{ category_slug }}')" style="background: none; border: none; font-size: 22px; color: #94a3b8; cursor: pointer;">&times;</button>
+            </div>
+            <!-- Modal Search filter -->
+            <div style="padding: 12px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                <input type="text" placeholder="Search components..." onkeyup="filterModalProducts(this, '{{ category_slug }}')" style="width: 100%; padding: 8px 12px; border: 1.5px solid #d1d5db; border-radius: 4px; font-size: 13.5px;">
+            </div>
+            <!-- Modal Body (Products List) -->
+            <div class="modal-product-list" style="overflow-y: auto; padding: 10px 20px; flex-grow: 1;">
+                {% for p in products %}
+                    <div class="modal-product-row" data-name="{{ p.name }}" style="display: flex; gap: 16px; align-items: center; padding: 14px 0; border-bottom: 1px solid #f1f5f9;">
+                        <div style="width: 60px; height: 60px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #ffffff;">
+                            <img src="{{ p.get_image_url }}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                        </div>
+                        <div style="flex-grow: 1;">
+                            <span style="font-weight: 800; font-size: 14px; color: #0d2137; display: block; font-family: 'Outfit', sans-serif;">{{ p.name }}</span>
+                            <span style="font-size: 11.5px; color: var(--text-muted);">
+                                {% for k, v in p.specifications.items %}
+                                    {{ k }}: {{ v }}{% if not forloop.last %} | {% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-size: 15px; font-weight: 800; color: #16a34a; display: block; margin-bottom: 6px;">${{ p.price }}</span>
+                            <button onclick="selectProduct('{{ category_slug }}', {{ p.id }}, '{{ p.name }}', '{{ p.price }}', '{{ p.get_image_url }}')" class="btn" style="padding: 6px 12px; font-size: 11.5px; font-weight: 700; background: #16a34a; border: 1px solid #16a34a; color: white; border-radius: 4px; cursor: pointer; transition: var(--transition-smooth);" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Select</button>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div style="text-align: center; color: var(--text-muted); padding: 40px 0;">
+                        No parts available in stock.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
+<script>
+function openModal(category) {
+    const modal = document.getElementById('modal-' + category);
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function closeModal(category) {
+    const modal = document.getElementById('modal-' + category);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function selectProduct(category, productId, name, price, imageUrl) {
+    const row = document.getElementById('row-' + category);
+    if (!row) return;
+
+    // Update Hidden Fields
+    document.getElementById('selected-' + category + '-id').value = productId;
+    document.getElementById('selected-' + category + '-price').value = price;
+
+    // Update Row visual elements
+    row.querySelector('.part-image-cell').innerHTML = `
+        <div style="width: 50px; height: 50px; padding: 2px; border: 1.5px solid #111827; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #ffffff;">
+            <img src="${imageUrl}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+        </div>
+    `;
+
+    row.querySelector('.part-details-cell').innerHTML = `
+        <span style="font-weight: 700; color: #0d2137; display: block; font-family: 'Outfit', sans-serif;">${name}</span>
+        <button onclick="removePart('${category}')" style="background: none; border: none; padding: 0; color: #ef4444; font-size: 11.5px; font-weight: 700; cursor: pointer; text-decoration: underline; margin-top: 4px;">Remove Part</button>
+    `;
+
+    row.querySelector('.part-price-cell').textContent = '$' + parseFloat(price).toFixed(2);
+
+    closeModal(category);
+    recalculateTotal();
+}
+
+function removePart(category) {
+    const row = document.getElementById('row-' + category);
+    if (!row) return;
+
+    // Clear values
+    document.getElementById('selected-' + category + '-id').value = '';
+    document.getElementById('selected-' + category + '-price').value = '0.00';
+
+    // Reset details
+    row.querySelector('.part-image-cell').innerHTML = `
+        <span style="display: inline-block; width: 50px; height: 50px; border: 1.5px dashed #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #cbd5e1;"><i class="fa fa-plus"></i></span>
+    `;
+
+    let labelText = category.toUpperCase();
+    if (category === 'cpus') labelText = 'CPU';
+    else if (category === 'gpus') labelText = 'GPU';
+    
+    row.querySelector('.part-details-cell').innerHTML = `
+        <span style="color: var(--text-muted); font-style: italic;">No ${labelText} component selected yet.</span>
+    `;
+
+    row.querySelector('.part-price-cell').textContent = '$0.00';
+
+    recalculateTotal();
+}
+
+function recalculateTotal() {
+    let total = 0;
+    document.querySelectorAll('.selected-part-price').forEach(el => {
+        total += parseFloat(el.value) || 0;
+    });
+    document.getElementById('total-build-cost').textContent = '$' + total.toFixed(2);
+}
+
+function resetBuilder() {
+    ['cpus', 'gpus', 'ram', 'storage'].forEach(cat => {
+        removePart(cat);
+    });
+}
+
+function filterModalProducts(input, category) {
+    const filter = input.value.toLowerCase();
+    const modal = document.getElementById('modal-' + category);
+    const rows = modal.querySelectorAll('.modal-product-row');
+    
+    rows.forEach(row => {
+        const name = row.dataset.name.toLowerCase();
+        if (name.includes(filter)) {
+            row.style.display = 'flex';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function addBuildToCart() {
+    const selectedIds = [];
+    document.querySelectorAll('.selected-part-id').forEach(el => {
+        if (el.value) {
+            selectedIds.push(parseInt(el.value));
+        }
+    });
+
+    if (selectedIds.length === 0) {
+        alert("Please select at least one component to add to the cart!");
+        return;
+    }
+
+    const btn = document.getElementById('btn-add-build');
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> Adding build...`;
+
+    // Process sequential additions
+    let chain = Promise.resolve();
+    selectedIds.forEach(id => {
+        chain = chain.then(() => {
+            return fetch('/cart/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: `product_id=${id}&quantity=1`
+            });
+        });
+    });
+
+    chain.then(() => {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa fa-shopping-cart"></i> ADD BUILD TO CART`;
+        
+        // Refresh sliding Cart drawer details
+        if (window.loadCartData) {
+            window.loadCartData();
+        }
+        
+        // Open Cart Drawer
+        const cartDrawer = document.getElementById('cart-drawer');
+        const cartOverlay = document.getElementById('cart-overlay');
+        if (cartDrawer && cartOverlay) {
+            cartDrawer.classList.add('open');
+            cartOverlay.classList.add('open');
+        }
+    }).catch(err => {
+        console.error("Error adding system build:", err);
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa fa-shopping-cart"></i> ADD BUILD TO CART`;
+        alert("An error occurred while adding build. Please try again.");
+    });
+}
+</script>
+{% endblock %}

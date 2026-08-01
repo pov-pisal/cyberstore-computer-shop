@@ -159,3 +159,35 @@ class ComputerShopTests(TestCase):
         self.assertEqual(self.product.average_rating, 4.0)
         self.assertEqual(self.product.review_count, 1)
 
+    def test_pc_builder_view(self):
+        response = self.client.get(reverse('pc_builder'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_product_compare_view(self):
+        response = self.client.get(reverse('product_compare') + f"?action=add&product_id={self.product.id}")
+        self.assertEqual(response.status_code, 302)
+        session = self.client.session
+        self.assertIn(self.product.id, session.get('compare_ids', []))
+        
+        response_remove = self.client.get(reverse('product_compare') + f"?action=remove&product_id={self.product.id}")
+        self.assertEqual(response_remove.status_code, 302)
+        session = self.client.session
+        self.assertNotIn(self.product.id, session.get('compare_ids', []))
+
+    def test_track_order_view(self):
+        order = Order.objects.create(
+            full_name="Jane Doe",
+            email="jane@example.com",
+            phone="87654321",
+            address="456 Track St",
+            city="Siem Reap",
+            total_amount=150.00
+        )
+        response = self.client.get(reverse('track_order') + f"?order_id={order.id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Jane Doe")
+        
+        response_fail = self.client.get(reverse('track_order') + "?order_id=9999")
+        self.assertEqual(response_fail.status_code, 200)
+        self.assertContains(response_fail, "Invalid Order ID or order not found")
+

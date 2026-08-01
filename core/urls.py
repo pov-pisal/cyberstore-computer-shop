@@ -28,4 +28,7 @@ urlpatterns = [
     path('dashboard/cart/<int:cart_id>/delete/', views.delete_cart, name='delete_cart'),
     path('coupon/apply/', views.apply_coupon, name='apply_coupon'),
     path('review/add/', views.add_review, name='add_review'),
+    path('pc-builder/', views.pc_builder, name='pc_builder'),
+    path('compare/', views.product_compare, name='product_compare'),
+    path('track/', views.track_order, name='track_order'),
 ]

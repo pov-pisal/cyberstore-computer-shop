@@ -465,6 +465,9 @@ Holds star ratings and comments left by customers.
 | **TC012** | Dashboard | Display warning alerts for items with low stock. | Product stock is 2. | 1. Log in as manager (`admin`).<br>2. View Dashboard. | Product listed in "Inventory Stock Warnings" with a crimson warning text. | Pass |
 | **TC013** | Coupons | Apply promo code during checkout. | Active coupons `CYBERGPU` exist. | 1. Open checkout cart.<br>2. Input "CYBERGPU" into coupon box.<br>3. Click Apply. | 10% discount is applied. Total amount is recalculated and displays deducted sum. | Pass |
 | **TC014** | Reviews | Write and submit a product review. | Customer is logged in, and product exists. | 1. Open product details page.<br>2. Input 5 stars and text comment.<br>3. Click Submit Review. | Review is saved in database and instantly displayed in the review feed. | Pass |
+| **TC015** | PC Builder | Configure a custom PC system build. | Hardware inventory products exist in database. | 1. Open /pc-builder/ page.<br>2. Select a CPU and GPU.<br>3. Click ADD BUILD TO CART. | Component price sum calculates instantly and selected items are added to cart drawer. | Pass |
+| **TC016** | Compare | Compare product specifications side-by-side. | Multiple products exist. | 1. Click Add to Compare on a CPU and RAM details pages.<br>2. Open /compare/. | Specifications display side-by-side in columns with active remove options. | Pass |
+| **TC017** | Tracking | Track delivery progress stepper. | Order with status 'Processing' exists. | 1. Open /track/ page.<br>2. Enter Order ID and click Track. | Shows detailed recipient fields, invoice totals, and stepper with Step 1 and 2 active. | Pass |
 
 ---
 
@@ -482,3 +485,6 @@ Holds star ratings and comments left by customers.
 | **8** | As a **Customer**, I want to apply promotional discount coupons to my cart. | 5 | Medium | 3 | Completed |
 | **9** | As a **Customer**, I want to review and rate hardware components I've bought. | 5 | Medium | 3 | Completed |
 | **10**| As a **Customer**, I want to adjust product layout columns dynamically. | 3 | Low | 3 | Completed |
+| **11**| As a **Customer**, I want to configure custom PC builds and add them to my cart. | 8 | Medium | 4 | Completed |
+| **12**| As a **Customer**, I want to compare product specifications side-by-side. | 5 | Low | 4 | Completed |
+| **13**| As a **Customer**, I want to track my delivery status via a progress stepper. | 5 | Low | 4 | Completed |

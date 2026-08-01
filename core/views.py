@@ -708,3 +708,73 @@ def add_review(request):
         
     return redirect('product_detail', slug=product.slug)
 
+
+def pc_builder(request):
+    # Get all active products for builder categories
+    categories = Category.objects.filter(slug__in=['cpus', 'gpus', 'ram', 'storage'])
+    products_by_cat = {}
+    for cat in categories:
+        products_by_cat[cat.slug] = Product.objects.filter(category=cat, is_active=True, stock__gt=0)
+    
+    return render(request, 'core/pc_builder.html', {
+        'products_by_cat': products_by_cat,
+    })
+
+
+def product_compare(request):
+    compare_ids = request.session.get('compare_ids', [])
+    action = request.GET.get('action')
+    product_id = request.GET.get('product_id')
+    
+    if product_id:
+        try:
+            product_id = int(product_id)
+            if action == 'add':
+                if product_id not in compare_ids:
+                    compare_ids.append(product_id)
+                    if len(compare_ids) > 4:
+                        compare_ids.pop(0)
+                    request.session['compare_ids'] = compare_ids
+                    request.session.modified = True
+            elif action == 'remove':
+                if product_id in compare_ids:
+                    compare_ids.remove(product_id)
+                    request.session['compare_ids'] = compare_ids
+                    request.session.modified = True
+        except ValueError:
+            pass
+            
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'ok', 'count': len(compare_ids)})
+        return redirect('product_compare')
+        
+    products = Product.objects.filter(id__in=compare_ids)
+    all_spec_keys = set()
+    for p in products:
+        if isinstance(p.specifications, dict):
+            all_spec_keys.update(p.specifications.keys())
+            
+    return render(request, 'core/compare.html', {
+        'products': products,
+        'all_spec_keys': sorted(list(all_spec_keys)),
+    })
+
+
+def track_order(request):
+    order_id = request.GET.get('order_id')
+    order = None
+    error = None
+    
+    if order_id:
+        try:
+            order = Order.objects.get(id=int(order_id))
+        except (Order.DoesNotExist, ValueError):
+            error = "Invalid Order ID or order not found."
+            
+    return render(request, 'core/track.html', {
+        'order': order,
+        'error': error,
+        'order_id': order_id,
+    })
+
+

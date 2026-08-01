@@ -88,6 +88,9 @@
                     <a href="{% url 'catalog' %}?category=monitors" class="nav-link" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">Monitors</a>
                     <a href="{% url 'catalog' %}?category=accessories" class="nav-link" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">Accessories</a>
                     <a href="{% url 'catalog' %}?category=storage" class="nav-link" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">Storage</a>
+                    <a href="{% url 'pc_builder' %}" class="nav-link {% if request.resolver_match.url_name == 'pc_builder' %}active{% endif %}" style="font-size: 13.5px; font-weight: 700; color: #16a34a; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth); display: flex; align-items: center; gap: 4px;"><i class="fa fa-tools"></i> PC Builder</a>
+                    <a href="{% url 'product_compare' %}" class="nav-link {% if request.resolver_match.url_name == 'product_compare' %}active{% endif %}" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth);">Compare</a>
+                    <a href="{% url 'track_order' %}" class="nav-link {% if request.resolver_match.url_name == 'track_order' %}active{% endif %}" style="font-size: 13.5px; font-weight: 600; color: #475569; text-decoration: none; text-transform: uppercase; transition: var(--transition-smooth); display: flex; align-items: center; gap: 4px;"><i class="fa fa-truck"></i> Track Order</a>
                 </div>
             </div>
         </div>

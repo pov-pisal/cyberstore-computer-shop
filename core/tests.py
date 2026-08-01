@@ -287,3 +287,56 @@ class ComputerShopTests(TestCase):
         login_success = self.client.login(username='john_doe', password='newsecretpassword')
         self.assertTrue(login_success)
 
+    def test_it_user_management_limits(self):
+        it_user = User.objects.create_user(username='it_guy', password='password123')
+        it_user.profile.role = 'it'
+        it_user.profile.is_manager = True
+        it_user.profile.save()
+        
+        admin_user = User.objects.create_user(username='admin_boss_2', password='password123')
+        admin_user.profile.role = 'admin'
+        admin_user.profile.is_manager = True
+        admin_user.profile.save()
+        
+        self.client.login(username='it_guy', password='password123')
+        
+        response_list = self.client.get('/dashboard/?tab=users')
+        self.assertEqual(response_list.status_code, 200)
+        
+        response_add_admin = self.client.post(reverse('add_user'), {
+            'username': 'sneaky_admin',
+            'email': 'sneaky@cyberstore.com',
+            'password': 'password123',
+            'role': 'admin'
+        })
+        self.assertRedirects(response_add_admin, '/dashboard/?tab=users')
+        self.assertFalse(User.objects.filter(username='sneaky_admin').exists())
+        
+        response_add_sale = self.client.post(reverse('add_user'), {
+            'username': 'sale_rep_2',
+            'email': 'sale2@cyberstore.com',
+            'password': 'password123',
+            'role': 'sale'
+        })
+        self.assertRedirects(response_add_sale, '/dashboard/?tab=users')
+        self.assertTrue(User.objects.filter(username='sale_rep_2').exists())
+        sale_created = User.objects.get(username='sale_rep_2')
+        self.assertEqual(sale_created.profile.role, 'sale')
+        
+        response_toggle = self.client.get(reverse('toggle_user_role', kwargs={'user_id': sale_created.id}) + "?role=admin")
+        self.assertRedirects(response_toggle, '/dashboard/?tab=users')
+        sale_created.refresh_from_db()
+        self.assertEqual(sale_created.profile.role, 'sale')
+        
+        response_toggle_admin = self.client.get(reverse('toggle_user_role', kwargs={'user_id': admin_user.id}) + "?role=customer")
+        self.assertRedirects(response_toggle_admin, '/dashboard/?tab=users')
+        admin_user.refresh_from_db()
+        self.assertEqual(admin_user.profile.role, 'admin')
+        
+        response_pw_admin = self.client.post(reverse('change_user_password', kwargs={'user_id': admin_user.id}), {'new_password': 'hackedpassword'})
+        self.assertRedirects(response_pw_admin, '/dashboard/?tab=users')
+        
+        self.client.logout()
+        admin_login = self.client.login(username='admin_boss_2', password='password123')
+        self.assertTrue(admin_login)
+

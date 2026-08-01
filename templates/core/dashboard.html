@@ -35,7 +35,7 @@
             <a href="?tab=reviews" class="tab-btn {% if active_tab == 'reviews' %}active{% endif %}">Manage Reviews</a>
         {% endif %}
         
-        {% if request.user.is_superuser or request.user.profile.role == 'admin' %}
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' or request.user.profile.role == 'it' %}
             <a href="?tab=users" class="tab-btn {% if active_tab == 'users' %}active{% endif %}">Manage Users</a>
         {% endif %}
         
@@ -694,14 +694,18 @@
                 </div>
             </div>
             <div style="display: flex; gap: 24px; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary);">
-                    <input type="checkbox" name="is_staff"> Is Django Admin Staff
-                </label>
+                {% if request.user.is_superuser or request.user.profile.role == 'admin' %}
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary);">
+                        <input type="checkbox" name="is_staff"> Is Django Admin Staff
+                    </label>
+                {% endif %}
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <label class="form-label" style="margin: 0; font-size: 13px;">Assign Dashboard Role:</label>
                     <select name="role" class="form-input" style="padding: 4px 8px; border-radius: 4px; font-weight: bold; background: white; cursor: pointer; max-width: 220px; color: black;">
                         <option value="customer">Customer (No Dashboard)</option>
-                        <option value="admin">System Admin (Full Access)</option>
+                        {% if request.user.is_superuser or request.user.profile.role == 'admin' %}
+                            <option value="admin">System Admin (Full Access)</option>
+                        {% endif %}
                         <option value="sale">Sale Staff (Orders & Discounts)</option>
                         <option value="it">IT Support (Catalog & Carts)</option>
                     </select>
@@ -736,25 +740,29 @@
                             <td>
                                 <strong>{{ u.username }}</strong>
                                 {% if not u.is_superuser and u != request.user %}
-                                    <div style="margin-top: 6px;">
-                                        <a href="#" onclick="event.preventDefault(); var f = document.getElementById('pass-form-{{ u.id }}'); f.style.display = (f.style.display === 'block') ? 'none' : 'block';" style="font-size: 10.5px; color: var(--accent-cyan); font-weight: 700; text-decoration: underline;">
-                                            Reset Password
-                                        </a>
-                                        <form id="pass-form-{{ u.id }}" method="POST" action="{% url 'change_user_password' u.id %}" style="display: none; margin-top: 6px; background: rgba(0,0,0,0.1); padding: 8px; border-radius: 4px; border: 1px solid var(--glass-border);">
-                                            {% csrf_token %}
-                                            <div style="display: flex; gap: 4px;">
-                                                <input type="password" name="new_password" required placeholder="New password" style="width: 100px; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 10px; color: black; font-weight: bold;">
-                                                <button type="submit" class="btn" style="padding: 4px 8px; font-size: 9.5px; background: #fbbf24; color: black; font-weight: 800; border-radius: 4px; border: none; cursor: pointer;">Save</button>
-                                            </div>
-                                        </form>
-                                    </div>
+                                    {% if request.user.profile.role != 'it' or u.profile.role != 'admin' %}
+                                        <div style="margin-top: 6px;">
+                                            <a href="#" onclick="event.preventDefault(); var f = document.getElementById('pass-form-{{ u.id }}'); f.style.display = (f.style.display === 'block') ? 'none' : 'block';" style="font-size: 10.5px; color: var(--accent-cyan); font-weight: 700; text-decoration: underline;">
+                                                Reset Password
+                                            </a>
+                                            <form id="pass-form-{{ u.id }}" method="POST" action="{% url 'change_user_password' u.id %}" style="display: none; margin-top: 6px; background: rgba(0,0,0,0.1); padding: 8px; border-radius: 4px; border: 1px solid var(--glass-border);">
+                                                {% csrf_token %}
+                                                <div style="display: flex; gap: 4px;">
+                                                    <input type="password" name="new_password" required placeholder="New password" style="width: 100px; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 10px; color: black; font-weight: bold;">
+                                                    <button type="submit" class="btn" style="padding: 4px 8px; font-size: 9.5px; background: #fbbf24; color: black; font-weight: 800; border-radius: 4px; border: none; cursor: pointer;">Save</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    {% endif %}
                                 {% endif %}
                             </td>
                             <td style="font-size: 13px;">{{ u.email|default:"- None -" }}</td>
                             <td style="font-size: 12px; color: var(--text-muted);">{{ u.date_joined|date:"Y-m-d H:i" }}</td>
                             <td>
-                                {% if u == request.user %}
-                                    <span class="badge badge-toggle-btn active" style="cursor: not-allowed; opacity: 0.75;">Active (You)</span>
+                                {% if u == request.user or request.user.profile.role == 'it' %}
+                                    <span class="badge {% if u.is_staff %}badge-completed{% else %}badge-cancelled{% endif %}" style="padding: 4px 8px;">
+                                        {% if u.is_staff %}Staff Active{% else %}Staff Inactive{% endif %}
+                                    </span>
                                 {% else %}
                                     <a href="{% url 'toggle_user_role' u.id %}?type=staff" class="badge-toggle-btn {% if u.is_staff %}active{% else %}inactive{% endif %}">
                                         {% if u.is_staff %}Staff Active{% else %}Staff Inactive{% endif %}
@@ -762,11 +770,15 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if u == request.user %}
+                                {% if u == request.user or u.is_superuser or u.profile.role == 'admin' %}
+                                    <span class="badge badge-completed" style="font-size: 11px; padding: 4px 8px;">{{ u.profile.get_role_display }}</span>
+                                {% elif request.user.profile.role == 'it' and u.profile.role == 'admin' %}
                                     <span class="badge badge-completed" style="font-size: 11px; padding: 4px 8px;">{{ u.profile.get_role_display }}</span>
                                 {% else %}
                                     <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                        <a href="{% url 'toggle_user_role' u.id %}?role=admin" class="badge-toggle-btn {% if u.profile.role == 'admin' %}active{% else %}inactive{% endif %}" style="font-size: 10px; padding: 2px 6px;">Admin</a>
+                                        {% if request.user.is_superuser or request.user.profile.role == 'admin' %}
+                                            <a href="{% url 'toggle_user_role' u.id %}?role=admin" class="badge-toggle-btn {% if u.profile.role == 'admin' %}active{% else %}inactive{% endif %}" style="font-size: 10px; padding: 2px 6px;">Admin</a>
+                                        {% endif %}
                                         <a href="{% url 'toggle_user_role' u.id %}?role=sale" class="badge-toggle-btn {% if u.profile.role == 'sale' %}active{% else %}inactive{% endif %}" style="font-size: 10px; padding: 2px 6px;">Sale</a>
                                         <a href="{% url 'toggle_user_role' u.id %}?role=it" class="badge-toggle-btn {% if u.profile.role == 'it' %}active{% else %}inactive{% endif %}" style="font-size: 10px; padding: 2px 6px;">IT</a>
                                         <a href="{% url 'toggle_user_role' u.id %}?role=customer" class="badge-toggle-btn {% if u.profile.role == 'customer' %}active{% else %}inactive{% endif %}" style="font-size: 10px; padding: 2px 6px;">Customer</a>

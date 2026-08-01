@@ -671,7 +671,9 @@ def delete_category(request, category_id):
 
 # 3. User Role Management
 def toggle_user_role(request, user_id):
-    if not is_manager(request.user):
+    user_role = request.user.profile.role
+    is_admin_or_it = request.user.is_superuser or user_role in ['admin', 'it']
+    if not is_admin_or_it:
         messages.error(request, "Access denied.")
         return redirect('home')
         
@@ -680,6 +682,21 @@ def toggle_user_role(request, user_id):
         messages.error(request, "You cannot modify your own roles.")
         return redirect('/dashboard/?tab=users')
         
+    # IT Support restrictions on managing admin users
+    if user_role == 'it' and not request.user.is_superuser:
+        if target_user.is_superuser or target_user.profile.role == 'admin':
+            messages.error(request, "IT Support is not permitted to manage Admin users.")
+            return redirect('/dashboard/?tab=users')
+            
+        new_role = request.GET.get('role')
+        if new_role == 'admin':
+            messages.error(request, "IT Support cannot assign the Admin role.")
+            return redirect('/dashboard/?tab=users')
+            
+        if request.GET.get('type') == 'staff':
+            messages.error(request, "IT Support cannot modify staff flags.")
+            return redirect('/dashboard/?tab=users')
+            
     new_role = request.GET.get('role')
     if new_role in ['customer', 'admin', 'sale', 'it']:
         profile = target_user.profile
@@ -707,7 +724,9 @@ def delete_cart(request, cart_id):
 
 # 5. User Creation CRUD
 def add_user(request):
-    if not is_manager(request.user):
+    user_role = request.user.profile.role
+    is_admin_or_it = request.user.is_superuser or user_role in ['admin', 'it']
+    if not is_admin_or_it:
         messages.error(request, "Access denied.")
         return redirect('home')
         
@@ -718,6 +737,11 @@ def add_user(request):
         is_staff = request.POST.get('is_staff') == 'on'
         role = request.POST.get('role', 'customer')
         
+        # IT support cannot create Admin users
+        if user_role == 'it' and not request.user.is_superuser and role == 'admin':
+            messages.error(request, "IT Support is not permitted to create Admin users.")
+            return redirect('/dashboard/?tab=users')
+            
         if User.objects.filter(username=username).exists():
             messages.error(request, f"Username '{username}' already exists.")
             return redirect('/dashboard/?tab=users')
@@ -920,12 +944,21 @@ def delete_review(request, review_id):
 
 @login_required
 def change_user_password(request, user_id):
-    if not is_manager(request.user) or request.user.profile.role != 'admin':
-        messages.error(request, "Access denied. Only System Admins can reset user passwords.")
+    user_role = request.user.profile.role
+    is_admin_or_it = request.user.is_superuser or user_role in ['admin', 'it']
+    if not is_admin_or_it:
+        messages.error(request, "Access denied. Only System Admins or IT Support can reset passwords.")
         return redirect('home')
         
     if request.method == 'POST':
         target_user = get_object_or_404(User, id=user_id)
+        
+        # IT Support restrictions on managing admin users
+        if user_role == 'it' and not request.user.is_superuser:
+            if target_user.is_superuser or target_user.profile.role == 'admin':
+                messages.error(request, "IT Support is not permitted to change password for Admin users.")
+                return redirect('/dashboard/?tab=users')
+                
         new_password = request.POST.get('new_password', '').strip()
         if len(new_password) < 6:
             messages.error(request, "Password must be at least 6 characters long.")

@@ -250,7 +250,7 @@ def checkout(request):
         # Check for coupon in session
         coupon_code = request.session.get('coupon_code')
         coupon = None
-        discount_amount = 0.00
+        discount_amount = Decimal('0.00')
         subtotal = cart.get_total_price
         
         if coupon_code:

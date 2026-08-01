@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -366,4 +367,35 @@ class ComputerShopTests(TestCase):
         self.assertContains(response_auth, "Order #")
         self.assertContains(response_auth, "Bob Builder")
         self.assertContains(response_auth, "$45.00")
+
+    def test_cart_add_assembly_service(self):
+        product = Product.objects.create(
+            category=self.category,
+            name="Builder RAM",
+            slug="builder-ram",
+            sku="RAM-BLD-01",
+            price=Decimal('50.00'),
+            stock=5
+        )
+        response_std = self.client.post(
+            reverse('cart_add'),
+            json.dumps({'product_id': product.id, 'quantity': 1}),
+            content_type='application/json'
+        )
+        self.assertEqual(response_std.status_code, 200)
+        self.assertTrue(json.loads(response_std.content)['success'])
+        
+        response_assembly = self.client.post(
+            reverse('cart_add'),
+            json.dumps({'product_id': 'assembly', 'quantity': 1}),
+            content_type='application/json'
+        )
+        self.assertEqual(response_assembly.status_code, 200)
+        resp_data = json.loads(response_assembly.content)
+        self.assertTrue(resp_data['success'])
+        
+        self.assertTrue(Product.objects.filter(sku="SERVICE-PC-BUILD").exists())
+        assembly_product = Product.objects.get(sku="SERVICE-PC-BUILD")
+        self.assertEqual(assembly_product.name, "V-TECH Professional PC Assembly Service")
+        self.assertEqual(assembly_product.price, Decimal('0.00'))
 

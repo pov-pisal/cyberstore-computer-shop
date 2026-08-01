@@ -120,11 +120,18 @@
     </div>
 
     <!-- Final Submit triggers -->
-    <div style="display: flex; justify-content: flex-end; gap: 16px; margin-bottom: 60px;">
-        <button onclick="resetBuilder()" class="btn" style="padding: 14px 28px; font-weight: 700; background: #ffffff; border: 1.5px solid #cbd5e1; color: #475569; border-radius: 4px; font-size: 14px; cursor: pointer; transition: var(--transition-smooth);" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#ffffff'">Clear Config</button>
-        <button id="btn-add-build" onclick="addBuildToCart()" class="btn" style="padding: 14px 32px; font-weight: 800; background: #16a34a; border: 1px solid #16a34a; color: white; border-radius: 4px; font-size: 14px; cursor: pointer; transition: var(--transition-smooth); display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
-            <i class="fa fa-shopping-cart"></i> ADD BUILD TO CART
-        </button>
+    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 24px; margin-bottom: 60px; flex-wrap: wrap;">
+        <label style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text-primary); cursor: pointer; font-size: 13.5px; user-select: none;">
+            <input type="checkbox" id="chk-request-assembly" checked style="width: 18px; height: 18px; cursor: pointer; accent-color: #16a34a;">
+            <span>Request V-TECH Professional PC Assembly Service (Free)</span>
+        </label>
+        
+        <div style="display: flex; gap: 16px;">
+            <button onclick="resetBuilder()" class="btn" style="padding: 14px 28px; font-weight: 700; background: #ffffff; border: 1.5px solid #cbd5e1; color: #475569; border-radius: 4px; font-size: 14px; cursor: pointer; transition: var(--transition-smooth);" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#ffffff'">Clear Config</button>
+            <button id="btn-add-build" onclick="addBuildToCart()" class="btn" style="padding: 14px 32px; font-weight: 800; background: #16a34a; border: 1px solid #16a34a; color: white; border-radius: 4px; font-size: 14px; cursor: pointer; transition: var(--transition-smooth); display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
+                <i class="fa fa-shopping-cart"></i> ADD BUILD TO CART
+            </button>
+        </div>
     </div>
 
 </div>
@@ -385,24 +392,39 @@ function addBuildToCart() {
         return;
     }
 
+    const requestAssembly = document.getElementById('chk-request-assembly')?.checked;
     const btn = document.getElementById('btn-add-build');
     btn.disabled = true;
     btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> Adding build...`;
 
-    // Process sequential additions
+    // Process sequential additions using application/json
     let chain = Promise.resolve();
     selectedIds.forEach(id => {
         chain = chain.then(() => {
             return fetch('/cart/add/', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: `product_id=${id}&quantity=1`
+                body: JSON.stringify({ product_id: id, quantity: 1 })
             });
         });
     });
+
+    // Add V-TECH assembly request if selected
+    if (requestAssembly) {
+        chain = chain.then(() => {
+            return fetch('/cart/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ product_id: 'assembly', quantity: 1 })
+            });
+        });
+    }
 
     chain.then(() => {
         btn.disabled = false;

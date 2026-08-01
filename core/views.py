@@ -168,7 +168,23 @@ def cart_add(request):
             product_id = data.get('product_id')
             quantity = int(data.get('quantity', 1))
             
-            product = get_object_or_404(Product, id=product_id)
+            if product_id == 'assembly':
+                category, _ = Category.objects.get_or_create(name="Services", slug="services")
+                product, _ = Product.objects.get_or_create(
+                    sku="SERVICE-PC-BUILD",
+                    defaults={
+                        'category': category,
+                        'name': "V-TECH Professional PC Assembly Service",
+                        'slug': "v-tech-professional-pc-assembly-service",
+                        'description': "Professional custom PC assembly service by V-Tech certified technicians. Includes routing, cable management, thermal compound application, and basic BIOS/POST testing.",
+                        'price': Decimal('0.00'),
+                        'stock': 9999,
+                        'is_active': True
+                    }
+                )
+            else:
+                product = get_object_or_404(Product, id=product_id)
+            
             if product.stock < quantity:
                 return JsonResponse({'success': False, 'error': f'Only {product.stock} items left in stock.'})
                 

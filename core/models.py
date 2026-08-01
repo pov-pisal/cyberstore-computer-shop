@@ -4,15 +4,22 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 class UserProfile(models.Model):
+    ROLE_CHOICES = (
+        ('customer', 'Customer'),
+        ('admin', 'System Admin'),
+        ('sale', 'Sale Staff'),
+        ('it', 'IT Support'),
+    )
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     phone = models.CharField(verbose_name='phone number', max_length=20, blank=True)
     address = models.TextField(blank=True)
     city = models.CharField(verbose_name='city', max_length=100, blank=True)
     country = models.CharField(verbose_name='country', max_length=100, blank=True)
     is_manager = models.BooleanField(default=False, help_text="Designates whether the user can access the custom manager dashboard.")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
 
     def __str__(self):
-        return f"{self.user.username}'s Profile"
+        return f"{self.user.username}'s Profile ({self.get_role_display()})"
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):

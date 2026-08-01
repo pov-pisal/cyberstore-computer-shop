@@ -239,3 +239,32 @@ class ComputerShopTests(TestCase):
         self.assertRedirects(response_review_del, '/dashboard/?tab=reviews')
         self.assertFalse(Review.objects.filter(id=review.id).exists())
 
+    def test_manager_dashboard_roles(self):
+        sale_user = User.objects.create_user(username='sales_rep', password='password123')
+        sale_user.profile.role = 'sale'
+        sale_user.profile.is_manager = True
+        sale_user.profile.save()
+        
+        self.client.login(username='sales_rep', password='password123')
+        response_sale = self.client.get('/dashboard/')
+        self.assertEqual(response_sale.status_code, 200)
+        self.assertContains(response_sale, "Manage Orders")
+        self.assertContains(response_sale, "Manage Coupons")
+        self.assertNotContains(response_sale, "Manage Products")
+        self.assertNotContains(response_sale, "Manage Users")
+        self.client.logout()
+
+        it_user = User.objects.create_user(username='it_support', password='password123')
+        it_user.profile.role = 'it'
+        it_user.profile.is_manager = True
+        it_user.profile.save()
+        
+        self.client.login(username='it_support', password='password123')
+        response_it = self.client.get('/dashboard/')
+        self.assertEqual(response_it.status_code, 200)
+        self.assertContains(response_it, "Manage Products")
+        self.assertContains(response_it, "Active Carts")
+        self.assertNotContains(response_it, "Manage Orders")
+        self.assertNotContains(response_it, "Manage Coupons")
+        self.client.logout()
+

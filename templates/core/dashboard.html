@@ -23,170 +23,202 @@
     <!-- Tabbed Navigation -->
     <div class="dashboard-tabs">
         <a href="?tab=overview" class="tab-btn {% if active_tab == 'overview' %}active{% endif %}">Overview</a>
-        <a href="?tab=products" class="tab-btn {% if active_tab == 'products' %}active{% endif %}">Manage Products</a>
-        <a href="?tab=categories" class="tab-btn {% if active_tab == 'categories' %}active{% endif %}">Manage Categories</a>
-        <a href="?tab=orders" class="tab-btn {% if active_tab == 'orders' %}active{% endif %}">Manage Orders</a>
-        <a href="?tab=coupons" class="tab-btn {% if active_tab == 'coupons' %}active{% endif %}">Manage Coupons</a>
-        <a href="?tab=reviews" class="tab-btn {% if active_tab == 'reviews' %}active{% endif %}">Manage Reviews</a>
-        <a href="?tab=users" class="tab-btn {% if active_tab == 'users' %}active{% endif %}">Manage Users</a>
-        <a href="?tab=carts" class="tab-btn {% if active_tab == 'carts' %}active{% endif %}">Active Carts</a>
+        
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' or request.user.profile.role == 'it' %}
+            <a href="?tab=products" class="tab-btn {% if active_tab == 'products' %}active{% endif %}">Manage Products</a>
+            <a href="?tab=categories" class="tab-btn {% if active_tab == 'categories' %}active{% endif %}">Manage Categories</a>
+        {% endif %}
+        
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' or request.user.profile.role == 'sale' %}
+            <a href="?tab=orders" class="tab-btn {% if active_tab == 'orders' %}active{% endif %}">Manage Orders</a>
+            <a href="?tab=coupons" class="tab-btn {% if active_tab == 'coupons' %}active{% endif %}">Manage Coupons</a>
+            <a href="?tab=reviews" class="tab-btn {% if active_tab == 'reviews' %}active{% endif %}">Manage Reviews</a>
+        {% endif %}
+        
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' %}
+            <a href="?tab=users" class="tab-btn {% if active_tab == 'users' %}active{% endif %}">Manage Users</a>
+        {% endif %}
+        
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' or request.user.profile.role == 'it' %}
+            <a href="?tab=carts" class="tab-btn {% if active_tab == 'carts' %}active{% endif %}">Active Carts</a>
+        {% endif %}
     </div>
 
     <!-- TAB PANEL: OVERVIEW -->
     {% if active_tab == 'overview' %}
     <!-- Metrics Grid -->
     <div class="dashboard-metrics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 30px;">
-        <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
-            <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Total Completed Sales</div>
-            <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #0d2137; margin-top: 8px;">${{ total_revenue }}</div>
-            <div class="metric-accent" style="height: 4px; background: var(--accent-cyan); margin-top: 12px; border-radius: 2px;"></div>
-        </div>
-        <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
-            <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Total Orders</div>
-            <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #0d2137; margin-top: 8px;">{{ total_orders_count }}</div>
-            <div class="metric-accent" style="height: 4px; background: var(--accent-indigo); margin-top: 12px; border-radius: 2px;"></div>
-        </div>
-        <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
-            <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Pending Orders</div>
-            <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #0d2137; margin-top: 8px;">{{ pending_orders_count }}</div>
-            <div class="metric-accent" style="height: 4px; background: var(--accent-amber); margin-top: 12px; border-radius: 2px;"></div>
-        </div>
-        <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
-            <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Low Stock Warning</div>
-            <div class="metric-value" style="font-size: 24px; font-weight: 800; color: {% if low_stock_count > 0 %}var(--accent-rose){% else %}#0d2137{% endif %}; margin-top: 8px;">{{ low_stock_count }}</div>
-            <div class="metric-accent" style="height: 4px; background: var(--accent-rose); margin-top: 12px; border-radius: 2px;"></div>
-        </div>
-        <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
-            <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Average Order Value (AOV)</div>
-            <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #16a34a; margin-top: 8px;">${{ average_order_value|floatformat:2 }}</div>
-            <div class="metric-accent" style="height: 4px; background: #a2d600; margin-top: 12px; border-radius: 2px;"></div>
-        </div>
-        <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
-            <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Registered Customers</div>
-            <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #0b4c8c; margin-top: 8px;">{{ total_customers_count }}</div>
-            <div class="metric-accent" style="height: 4px; background: #0b4c8c; margin-top: 12px; border-radius: 2px;"></div>
-        </div>
-        <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
-            <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Total Coupon Discounts</div>
-            <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #dc2626; margin-top: 8px;">-${{ total_discounts_applied|floatformat:2 }}</div>
-            <div class="metric-accent" style="height: 4px; background: #dc2626; margin-top: 12px; border-radius: 2px;"></div>
-        </div>
-        <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
-            <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Top Seller Component</div>
-            <div class="metric-value" style="font-size: 12.5px; font-weight: 800; color: #0d2137; margin-top: 8px; line-height: 1.3;">{{ best_selling_product }}</div>
-            <div class="metric-accent" style="height: 4px; background: #fbbf24; margin-top: 12px; border-radius: 2px;"></div>
-        </div>
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' or request.user.profile.role == 'sale' %}
+            <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
+                <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Total Completed Sales</div>
+                <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #0d2137; margin-top: 8px;">${{ total_revenue }}</div>
+                <div class="metric-accent" style="height: 4px; background: var(--accent-cyan); margin-top: 12px; border-radius: 2px;"></div>
+            </div>
+            <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
+                <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Total Orders</div>
+                <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #0d2137; margin-top: 8px;">{{ total_orders_count }}</div>
+                <div class="metric-accent" style="height: 4px; background: var(--accent-indigo); margin-top: 12px; border-radius: 2px;"></div>
+            </div>
+            <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
+                <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Pending Orders</div>
+                <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #0d2137; margin-top: 8px;">{{ pending_orders_count }}</div>
+                <div class="metric-accent" style="height: 4px; background: var(--accent-amber); margin-top: 12px; border-radius: 2px;"></div>
+            </div>
+        {% endif %}
+        
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' or request.user.profile.role == 'it' %}
+            <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
+                <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Low Stock Warning</div>
+                <div class="metric-value" style="font-size: 24px; font-weight: 800; color: {% if low_stock_count > 0 %}var(--accent-rose){% else %}#0d2137{% endif %}; margin-top: 8px;">{{ low_stock_count }}</div>
+                <div class="metric-accent" style="height: 4px; background: var(--accent-rose); margin-top: 12px; border-radius: 2px;"></div>
+            </div>
+        {% endif %}
+        
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' or request.user.profile.role == 'sale' %}
+            <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
+                <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Average Order Value (AOV)</div>
+                <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #16a34a; margin-top: 8px;">${{ average_order_value|floatformat:2 }}</div>
+                <div class="metric-accent" style="height: 4px; background: #a2d600; margin-top: 12px; border-radius: 2px;"></div>
+            </div>
+        {% endif %}
+        
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' %}
+            <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
+                <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Registered Customers</div>
+                <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #0b4c8c; margin-top: 8px;">{{ total_customers_count }}</div>
+                <div class="metric-accent" style="height: 4px; background: #0b4c8c; margin-top: 12px; border-radius: 2px;"></div>
+            </div>
+        {% endif %}
+        
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' or request.user.profile.role == 'sale' %}
+            <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
+                <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Total Coupon Discounts</div>
+                <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #dc2626; margin-top: 8px;">-${{ total_discounts_applied|floatformat:2 }}</div>
+                <div class="metric-accent" style="height: 4px; background: #dc2626; margin-top: 12px; border-radius: 2px;"></div>
+            </div>
+            <div class="glass-card metric-card" style="margin: 0; padding: 20px;">
+                <div class="metric-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Top Seller Component</div>
+                <div class="metric-value" style="font-size: 12.5px; font-weight: 800; color: #0d2137; margin-top: 8px; line-height: 1.3;">{{ best_selling_product }}</div>
+                <div class="metric-accent" style="height: 4px; background: #fbbf24; margin-top: 12px; border-radius: 2px;"></div>
+            </div>
+        {% endif %}
     </div>
     
     <div class="dashboard-sections">
-        <!-- Recent Orders -->
-        <div class="glass-card dashboard-card">
-            <h2>Recent Orders</h2>
-            <div style="overflow-x: auto;">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for order in orders|slice:":5" %}
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' or request.user.profile.role == 'sale' %}
+            <!-- Recent Orders -->
+            <div class="glass-card dashboard-card">
+                <h2>Recent Orders</h2>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
                             <tr>
-                                <td style="font-weight: 700; color: white;">#{{ order.id }}</td>
-                                <td>
-                                    <strong>{{ order.full_name }}</strong>
-                                    <div style="font-size: 11px; color: var(--text-muted);">{{ order.email }}</div>
-                                </td>
-                                <td style="font-weight: 700; color: var(--accent-cyan);">${{ order.total_amount }}</td>
-                                <td>
-                                    <span class="badge badge-{{ order.status|lower }}">{{ order.status }}</span>
-                                </td>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
                             </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">
-                                    No customer orders placed yet.
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for order in orders|slice:":5" %}
+                                <tr>
+                                    <td style="font-weight: 700; color: white;">#{{ order.id }}</td>
+                                    <td>
+                                        <strong>{{ order.full_name }}</strong>
+                                        <div style="font-size: 11px; color: var(--text-muted);">{{ order.email }}</div>
+                                    </td>
+                                    <td style="font-weight: 700; color: var(--accent-cyan);">${{ order.total_amount }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ order.status|lower }}">{{ order.status }}</span>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">
+                                        No customer orders placed yet.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        {% endif %}
         
-        <!-- Stock Warnings -->
-        <div class="glass-card dashboard-card">
-            <h2>Inventory Stock Warnings</h2>
-            <div style="overflow-x: auto;">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Item Name</th>
-                            <th>Stock</th>
-                            <th style="text-align: center; width: 140px;">Quick Restock</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in low_stock_items %}
+        {% if request.user.is_superuser or request.user.profile.role == 'admin' or request.user.profile.role == 'it' %}
+            <!-- Stock Warnings -->
+            <div class="glass-card dashboard-card">
+                <h2>Inventory Stock Warnings</h2>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
                             <tr>
-                                <td style="font-size: 13px;">
-                                    <strong>{{ item.name }}</strong>
-                                    <div style="font-size: 10px; color: var(--text-muted);">SKU: {{ item.sku }}</div>
-                                </td>
-                                <td style="font-weight: 700; color: var(--accent-rose);">
-                                    {{ item.stock }} left
-                                </td>
-                                <td style="padding: 6px;">
-                                    <form method="POST" action="{% url 'restock_product' item.id %}" style="display: flex; gap: 6px; align-items: center; justify-content: center; margin: 0;">
-                                        {% csrf_token %}
-                                        <input type="number" name="quantity" min="1" value="10" style="width: 50px; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 11px; color: black; font-weight: bold; text-align: center;">
-                                        <button type="submit" class="btn" style="padding: 4px 8px; font-size: 10.5px; background: #16a34a; color: white; border: none; font-weight: 700; border-radius: 4px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Add</button>
-                                    </form>
-                                </td>
+                                <th>Item Name</th>
+                                <th>Stock</th>
+                                <th style="text-align: center; width: 140px;">Quick Restock</th>
                             </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="3" style="text-align: center; color: var(--accent-emerald); padding: 30px 0; font-size: 14px;">
-                                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-bottom: 8px; display: block; margin: 0 auto 8px;">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    All products fully stocked.
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for item in low_stock_items %}
+                                <tr>
+                                    <td style="font-size: 13px;">
+                                        <strong>{{ item.name }}</strong>
+                                        <div style="font-size: 10px; color: var(--text-muted);">SKU: {{ item.sku }}</div>
+                                    </td>
+                                    <td style="font-weight: 700; color: var(--accent-rose);">
+                                        {{ item.stock }} left
+                                    </td>
+                                    <td style="padding: 6px;">
+                                        <form method="POST" action="{% url 'restock_product' item.id %}" style="display: flex; gap: 6px; align-items: center; justify-content: center; margin: 0;">
+                                            {% csrf_token %}
+                                            <input type="number" name="quantity" min="1" value="10" style="width: 50px; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 11px; color: black; font-weight: bold; text-align: center;">
+                                            <button type="submit" class="btn" style="padding: 4px 8px; font-size: 10.5px; background: #16a34a; color: white; border: none; font-weight: 700; border-radius: 4px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Add</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" style="text-align: center; color: var(--accent-emerald); padding: 30px 0; font-size: 14px;">
+                                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-bottom: 8px; display: block; margin: 0 auto 8px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        All products fully stocked.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        {% endif %}
     </div>
 
-    <!-- Category Sales Performance -->
-    <div class="glass-card" style="margin-top: 30px; margin-bottom: 30px; padding: 24px;">
-        <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; font-weight: 800; color: #0d2137; font-family: 'Outfit', sans-serif;">Category Sales Performance</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
-            {% for item in category_sales %}
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.01);">
-                    <div style="display: flex; justify-content: space-between; font-weight: 700; color: #0d2137; font-size: 13px; margin-bottom: 8px; font-family: 'Outfit', sans-serif;">
-                        <span>{{ item.name }}</span>
-                        <span style="color: #16a34a;">${{ item.revenue }}</span>
+    {% if request.user.is_superuser or request.user.profile.role == 'admin' or request.user.profile.role == 'sale' %}
+        <!-- Category Sales Performance -->
+        <div class="glass-card" style="margin-top: 30px; margin-bottom: 30px; padding: 24px;">
+            <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; font-weight: 800; color: #0d2137; font-family: 'Outfit', sans-serif;">Category Sales Performance</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+                {% for item in category_sales %}
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.01);">
+                        <div style="display: flex; justify-content: space-between; font-weight: 700; color: #0d2137; font-size: 13px; margin-bottom: 8px; font-family: 'Outfit', sans-serif;">
+                            <span>{{ item.name }}</span>
+                            <span style="color: #16a34a;">${{ item.revenue }}</span>
+                        </div>
+                        <div style="position: relative; height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 8px;">
+                            <div style="position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #0b4c8c, #16a34a); border-radius: 10px; transition: width 0.5s ease; width: {{ item.percentage }}%;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); font-weight: 600;">
+                            <span>Units Sold: {{ item.qty_sold }}</span>
+                        </div>
                     </div>
-                    <div style="position: relative; height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 8px;">
-                        <div style="position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #0b4c8c, #16a34a); border-radius: 10px; transition: width 0.5s ease; width: {{ item.percentage }}%;"></div>
+                {% empty %}
+                    <div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 20px 0;">
+                        No sales recorded across product categories yet.
                     </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); font-weight: 600;">
-                        <span>Units Sold: {{ item.qty_sold }}</span>
-                    </div>
-                </div>
-            {% empty %}
-                <div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 20px 0;">
-                    No sales recorded across product categories yet.
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
-    </div>
+    {% endif %}
 
     <!-- TAB PANEL: PRODUCTS -->
     {% elif active_tab == 'products' %}
@@ -661,13 +693,19 @@
                     <input type="password" name="password" class="form-input" required placeholder="••••••••">
                 </div>
             </div>
-            <div style="display: flex; gap: 24px; align-items: center; margin-bottom: 20px;">
+            <div style="display: flex; gap: 24px; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary);">
                     <input type="checkbox" name="is_staff"> Is Django Admin Staff
                 </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary);">
-                    <input type="checkbox" name="is_manager"> Is Cyberstore Shop Manager
-                </label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label class="form-label" style="margin: 0; font-size: 13px;">Assign Dashboard Role:</label>
+                    <select name="role" class="form-input" style="padding: 4px 8px; border-radius: 4px; font-weight: bold; background: white; cursor: pointer; max-width: 220px; color: black;">
+                        <option value="customer">Customer (No Dashboard)</option>
+                        <option value="admin">System Admin (Full Access)</option>
+                        <option value="sale">Sale Staff (Orders & Discounts)</option>
+                        <option value="it">IT Support (Catalog & Carts)</option>
+                    </select>
+                </div>
             </div>
             <div style="text-align: right;">
                 <button type="submit" class="btn btn-primary">Create User Account</button>
@@ -678,7 +716,7 @@
     <!-- Users List -->
     <div class="glass-card">
         <h2>User Accounts</h2>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">* Click on the Staff or Shop Manager badges to toggle user roles instantly.</p>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">* Click on the Admin Staff badges to toggle admin flags, or click any role badge to set dashboard access level.</p>
         <div style="overflow-x: auto;">
             <table class="data-table">
                 <thead>
@@ -688,7 +726,7 @@
                         <th>Email</th>
                         <th>Date Joined</th>
                         <th>Admin Staff Role</th>
-                        <th>Shop Manager Role</th>
+                        <th>Dashboard System Role</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -709,11 +747,14 @@
                             </td>
                             <td>
                                 {% if u == request.user %}
-                                    <span class="badge badge-toggle-btn active" style="cursor: not-allowed; opacity: 0.75;">Active (You)</span>
+                                    <span class="badge badge-completed" style="font-size: 11px; padding: 4px 8px;">{{ u.profile.get_role_display }}</span>
                                 {% else %}
-                                    <a href="{% url 'toggle_user_role' u.id %}?type=manager" class="badge-toggle-btn {% if u.profile.is_manager %}active{% else %}inactive{% endif %}">
-                                        {% if u.profile.is_manager %}Manager Active{% else %}Manager Inactive{% endif %}
-                                    </a>
+                                    <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                        <a href="{% url 'toggle_user_role' u.id %}?role=admin" class="badge-toggle-btn {% if u.profile.role == 'admin' %}active{% else %}inactive{% endif %}" style="font-size: 10px; padding: 2px 6px;">Admin</a>
+                                        <a href="{% url 'toggle_user_role' u.id %}?role=sale" class="badge-toggle-btn {% if u.profile.role == 'sale' %}active{% else %}inactive{% endif %}" style="font-size: 10px; padding: 2px 6px;">Sale</a>
+                                        <a href="{% url 'toggle_user_role' u.id %}?role=it" class="badge-toggle-btn {% if u.profile.role == 'it' %}active{% else %}inactive{% endif %}" style="font-size: 10px; padding: 2px 6px;">IT</a>
+                                        <a href="{% url 'toggle_user_role' u.id %}?role=customer" class="badge-toggle-btn {% if u.profile.role == 'customer' %}active{% else %}inactive{% endif %}" style="font-size: 10px; padding: 2px 6px;">Customer</a>
+                                    </div>
                                 {% endif %}
                             </td>
                         </tr>

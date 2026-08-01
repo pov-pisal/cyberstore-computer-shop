@@ -680,13 +680,14 @@ def toggle_user_role(request, user_id):
         messages.error(request, "You cannot modify your own roles.")
         return redirect('/dashboard/?tab=users')
         
-    role_type = request.GET.get('type')
-    if role_type == 'manager':
+    new_role = request.GET.get('role')
+    if new_role in ['customer', 'admin', 'sale', 'it']:
         profile = target_user.profile
-        profile.is_manager = not profile.is_manager
+        profile.role = new_role
+        profile.is_manager = (new_role in ['admin', 'sale', 'it'])
         profile.save()
-        messages.success(request, f"User '{target_user.username}' manager status updated.")
-    elif role_type == 'staff':
+        messages.success(request, f"User '{target_user.username}' role updated to '{profile.get_role_display()}'.")
+    elif request.GET.get('type') == 'staff':
         target_user.is_staff = not target_user.is_staff
         target_user.save()
         messages.success(request, f"User '{target_user.username}' staff status updated.")
@@ -715,7 +716,7 @@ def add_user(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
         is_staff = request.POST.get('is_staff') == 'on'
-        is_manager_role = request.POST.get('is_manager') == 'on'
+        role = request.POST.get('role', 'customer')
         
         if User.objects.filter(username=username).exists():
             messages.error(request, f"Username '{username}' already exists.")
@@ -727,10 +728,11 @@ def add_user(request):
             new_user.save()
             
             profile = new_user.profile
-            profile.is_manager = is_manager_role
+            profile.role = role
+            profile.is_manager = (role in ['admin', 'sale', 'it'])
             profile.save()
             
-            messages.success(request, f"User account '{username}' created successfully.")
+            messages.success(request, f"User account '{username}' created successfully with role '{profile.get_role_display()}'.")
         except Exception as e:
             messages.error(request, f"Error creating user: {str(e)}")
             

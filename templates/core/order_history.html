@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Order History | V-TECH COMPUTER{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; padding: 30px 15px;">
+    
+    <!-- Breadcrumbs -->
+    <div style="margin-bottom: 24px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+        <a href="{% url 'home' %}" style="color: var(--text-secondary); text-decoration: none;"><i class="fa fa-home"></i></a>
+        <span style="color: var(--text-muted);">&gt;</span>
+        <span style="color: #0b4c8c; font-weight: 600;">Order History</span>
+    </div>
+
+    <!-- Title Card -->
+    <div style="background: #ffffff; border: 1px solid var(--glass-border); border-radius: var(--border-radius-sm); padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 30px;" class="card">
+        <h1 style="font-size: 26px; font-weight: 800; color: #0d2137; margin: 0; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 10px;">
+            <i class="fa fa-receipt" style="color: #0b4c8c;"></i> My Order History
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 14.5px; margin: 8px 0 0; line-height: 1.6;">Review your purchases, check payment status, and track shipment updates.</p>
+    </div>
+
+    <!-- Orders Loop -->
+    {% for order in orders %}
+        <div style="background: #ffffff; border: 1px solid var(--glass-border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 24px; overflow: hidden;" class="card">
+            <!-- Order Header -->
+            <div style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;" class="data-table">
+                <div>
+                    <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; letter-spacing: 0.5px;">Order Placement</span>
+                    <strong style="font-size: 15px; color: #0d2137;" class="product-title">Order #{{ order.id }}</strong>
+                    <span style="font-size: 12px; color: var(--text-muted); margin-left: 8px;">{{ order.created_at|date:"F j, Y, g:i a" }}</span>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <!-- Status Badge -->
+                    <span class="badge {% if order.status == 'Completed' %}badge-completed{% elif order.status == 'Processing' %}badge-processing{% elif order.status == 'Pending' %}badge-pending{% else %}badge-cancelled{% endif %}" style="padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 4px;">
+                        {{ order.status }}
+                    </span>
+                    <!-- Paid status -->
+                    {% if order.is_paid %}
+                        <span style="background: #dcfce7; color: #166534; padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; border: 1px solid #bbf7d0;">Paid</span>
+                    {% else %}
+                        <span style="background: #fee2e2; color: #991b1b; padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; border: 1px solid #fecaca;">Unpaid</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Order Items Body -->
+            <div style="padding: 24px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #f1f5f9; text-align: left;">
+                            <th style="padding-bottom: 12px; font-weight: 700; color: var(--text-secondary);">Product</th>
+                            <th style="padding-bottom: 12px; font-weight: 700; color: var(--text-secondary); text-align: center; width: 80px;">Qty</th>
+                            <th style="padding-bottom: 12px; font-weight: 700; color: var(--text-secondary); text-align: right; width: 120px;">Unit Price</th>
+                            <th style="padding-bottom: 12px; font-weight: 700; color: var(--text-secondary); text-align: right; width: 120px;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                            <tr style="border-bottom: 1px solid #f8fafc;">
+                                <td style="padding: 12px 0; font-weight: 700; color: #0d2137;" class="product-title">
+                                    {{ item.product.name }}
+                                </td>
+                                <td style="padding: 12px 0; text-align: center; color: var(--text-muted);">
+                                    {{ item.quantity }}
+                                </td>
+                                <td style="padding: 12px 0; text-align: right; color: var(--text-secondary);">
+                                    ${{ item.price }}
+                                </td>
+                                <td style="padding: 12px 0; text-align: right; font-weight: bold; color: #16a34a;">
+                                    ${{ item.get_cost }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Summary row -->
+                <div style="margin-top: 20px; border-top: 1.5px dashed #e2e8f0; padding-top: 16px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <span style="display: block; font-size: 13px; color: var(--text-muted);">Shipping Address:</span>
+                        <address style="font-style: normal; font-size: 13px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4;">
+                            <strong>{{ order.full_name }}</strong><br>
+                            {{ order.address }}, {{ order.city }}, {{ order.country }}<br>
+                            Phone: {{ order.phone }}
+                        </address>
+                    </div>
+                    <div style="text-align: right; min-width: 200px;">
+                        {% if order.discount_amount > 0 %}
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: var(--text-muted);">
+                                <span>Discount:</span>
+                                <span>-${{ order.discount_amount }}</span>
+                            </div>
+                        {% endif %}
+                        <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; color: #0d2137; font-family: 'Outfit', sans-serif;" class="price-text">
+                            <span>Total Amount:</span>
+                            <span style="color: #16a34a;">${{ order.total_amount }}</span>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <a href="{% url 'track_order' %}?order_id={{ order.id }}" class="btn btn-primary" style="padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px; background: #0b4c8c; border-color: #0b4c8c;">
+                                <i class="fa fa-map-location-dot"></i> Live Tracking Portal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <!-- Empty State -->
+        <div style="background: #ffffff; border: 1px solid var(--glass-border); border-radius: var(--border-radius-sm); padding: 50px 20px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.02);" class="card">
+            <i class="fa fa-folder-open" style="font-size: 48px; color: #cbd5e1; margin-bottom: 16px;"></i>
+            <h3 style="font-size: 18px; font-weight: 700; color: #0d2137; margin-bottom: 8px;">No orders found</h3>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; max-width: 320px; margin-left: auto; margin-right: auto; line-height: 1.5;">You haven't placed any orders yet. Explore our custom build components to assemble your first rig!</p>
+            <a href="{% url 'catalog' %}" class="btn btn-primary" style="padding: 10px 24px; font-weight: bold; background: #0b4c8c; border-color: #0b4c8c;">Browse Catalog</a>
+        </div>
+    {% endfor %}
+
+</div>
+{% endblock %}

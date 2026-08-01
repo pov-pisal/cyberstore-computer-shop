@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -339,4 +340,30 @@ class ComputerShopTests(TestCase):
         self.client.logout()
         admin_login = self.client.login(username='admin_boss_2', password='password123')
         self.assertTrue(admin_login)
+
+    def test_order_history_view(self):
+        response_guest = self.client.get(reverse('order_history'))
+        self.assertEqual(response_guest.status_code, 302)
+        
+        user = User.objects.create_user(username='customer_bob', password='password123')
+        user.profile.role = 'customer'
+        user.profile.save()
+        
+        order = Order.objects.create(
+            user=user,
+            full_name='Bob Builder',
+            email='bob@cyberstore.com',
+            phone='012345678',
+            address='Street 123',
+            city='Phnom Penh',
+            country='Cambodia',
+            total_amount=Decimal('45.00')
+        )
+        
+        self.client.login(username='customer_bob', password='password123')
+        response_auth = self.client.get(reverse('order_history'))
+        self.assertEqual(response_auth.status_code, 200)
+        self.assertContains(response_auth, "Order #")
+        self.assertContains(response_auth, "Bob Builder")
+        self.assertContains(response_auth, "$45.00")
 

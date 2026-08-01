@@ -969,4 +969,12 @@ def change_user_password(request, user_id):
             
     return redirect('/dashboard/?tab=users')
 
+@login_required
+def order_history(request):
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    context = {
+        'orders': orders,
+    }
+    return render(request, 'core/order_history.html', context)
+
 

@@ -399,3 +399,43 @@ class ComputerShopTests(TestCase):
         self.assertEqual(assembly_product.name, "V-TECH Professional PC Assembly Service")
         self.assertEqual(assembly_product.price, Decimal('0.00'))
 
+    def test_delete_user_privileges(self):
+        admin = User.objects.create_user(username='admin_del', password='password123')
+        admin.profile.role = 'admin'
+        admin.profile.is_manager = True
+        admin.profile.save()
+        
+        it_guy = User.objects.create_user(username='it_del', password='password123')
+        it_guy.profile.role = 'it'
+        it_guy.profile.is_manager = True
+        it_guy.profile.save()
+        
+        customer = User.objects.create_user(username='customer_del', password='password123')
+        customer.profile.role = 'customer'
+        customer.profile.save()
+        
+        self.client.login(username='customer_del', password='password123')
+        response_cust = self.client.get(reverse('delete_user', kwargs={'user_id': it_guy.id}))
+        self.assertRedirects(response_cust, '/')
+        self.assertTrue(User.objects.filter(username='it_del').exists())
+        self.client.logout()
+        
+        self.client.login(username='it_del', password='password123')
+        response_it_admin = self.client.get(reverse('delete_user', kwargs={'user_id': admin.id}))
+        self.assertRedirects(response_it_admin, '/dashboard/?tab=users')
+        self.assertTrue(User.objects.filter(username='admin_del').exists())
+        
+        response_it_cust = self.client.get(reverse('delete_user', kwargs={'user_id': customer.id}))
+        self.assertRedirects(response_it_cust, '/dashboard/?tab=users')
+        self.assertFalse(User.objects.filter(username='customer_del').exists())
+        
+        response_self = self.client.get(reverse('delete_user', kwargs={'user_id': it_guy.id}))
+        self.assertRedirects(response_self, '/dashboard/?tab=users')
+        self.assertTrue(User.objects.filter(username='it_del').exists())
+        self.client.logout()
+        
+        self.client.login(username='admin_del', password='password123')
+        response_adm_it = self.client.get(reverse('delete_user', kwargs={'user_id': it_guy.id}))
+        self.assertRedirects(response_adm_it, '/dashboard/?tab=users')
+        self.assertFalse(User.objects.filter(username='it_del').exists())
+

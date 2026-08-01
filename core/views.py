@@ -993,4 +993,35 @@ def order_history(request):
     }
     return render(request, 'core/order_history.html', context)
 
+@login_required
+def delete_user(request, user_id):
+    # Check permissions
+    if not (request.user.is_superuser or request.user.profile.role in ['admin', 'it']):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+        
+    target_user = get_object_or_404(User, id=user_id)
+    
+    # IT Support restrictions on managing admin users
+    user_role = request.user.profile.role
+    if user_role == 'it' and not request.user.is_superuser:
+        if target_user.is_superuser or target_user.profile.role == 'admin':
+            messages.error(request, "IT Support is not permitted to delete Admin users.")
+            return redirect('/dashboard/?tab=users')
+            
+    # Prevent self-deletion
+    if target_user == request.user:
+        messages.error(request, "You cannot delete your own account.")
+        return redirect('/dashboard/?tab=users')
+        
+    # Prevent deleting superusers by non-superusers
+    if target_user.is_superuser and not request.user.is_superuser:
+        messages.error(request, "Only Superusers can delete other Superusers.")
+        return redirect('/dashboard/?tab=users')
+
+    username = target_user.username
+    target_user.delete()
+    messages.success(request, f"User account '{username}' has been deleted successfully.")
+    return redirect('/dashboard/?tab=users')
+
 

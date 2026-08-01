@@ -31,4 +31,7 @@ urlpatterns = [
     path('pc-builder/', views.pc_builder, name='pc_builder'),
     path('compare/', views.product_compare, name='product_compare'),
     path('track/', views.track_order, name='track_order'),
+    path('dashboard/product/<int:product_id>/restock/', views.restock_product, name='restock_product'),
+    path('dashboard/coupon/add/', views.add_coupon, name='add_coupon'),
+    path('dashboard/coupon/<int:coupon_id>/delete/', views.delete_coupon, name='delete_coupon'),
 ]

@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from .models import Category, Product, Cart, CartItem, Order, OrderItem
+from .models import Category, Product, Cart, CartItem, Order, OrderItem, Coupon, Review
 
 class ComputerShopTests(TestCase):
     def setUp(self):
@@ -190,4 +190,29 @@ class ComputerShopTests(TestCase):
         response_fail = self.client.get(reverse('track_order') + "?order_id=9999")
         self.assertEqual(response_fail.status_code, 200)
         self.assertContains(response_fail, "Invalid Order ID or order not found")
+
+    def test_manager_dashboard_extended(self):
+        manager = User.objects.create_user(username='mng_extend', password='password123')
+        profile = manager.profile
+        profile.is_manager = True
+        profile.save()
+        self.client.login(username='mng_extend', password='password123')
+        
+        response = self.client.post(reverse('restock_product', kwargs={'product_id': self.product.id}), {'quantity': 15})
+        self.assertRedirects(response, '/dashboard/?tab=overview')
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, 25)
+        
+        response_add = self.client.post(reverse('add_coupon'), {
+            'code': 'NEW25',
+            'discount_percent': '25',
+            'is_active': 'on'
+        })
+        self.assertRedirects(response_add, '/dashboard/?tab=coupons')
+        self.assertTrue(Coupon.objects.filter(code='NEW25').exists())
+        
+        coupon = Coupon.objects.get(code='NEW25')
+        response_del = self.client.get(reverse('delete_coupon', kwargs={'coupon_id': coupon.id}))
+        self.assertRedirects(response_del, '/dashboard/?tab=coupons')
+        self.assertFalse(Coupon.objects.filter(code='NEW25').exists())
 

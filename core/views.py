@@ -380,11 +380,42 @@ def dashboard_view(request):
     categories = Category.objects.all().order_by('name')
     users = User.objects.all().order_by('-date_joined')
     carts = Cart.objects.all().order_by('-id')
+    coupons = Coupon.objects.all().order_by('-id')
     
-    # Statistics
-    total_revenue = Order.objects.filter(status='Completed', is_paid=True).aggregate(Sum('total_amount'))['total_amount__sum'] or 0.00
+    # Advanced Statistics
+    completed_orders = Order.objects.filter(status='Completed')
+    completed_orders_count = completed_orders.count()
+    total_revenue = completed_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0.00
     total_orders_count = orders.count()
     pending_orders_count = Order.objects.filter(status='Pending').count()
+    
+    # Average Order Value (AOV)
+    average_order_value = total_revenue / completed_orders_count if completed_orders_count > 0 else 0.00
+    
+    # Total Customers count
+    total_customers_count = User.objects.filter(is_superuser=False).count()
+    
+    # Total Discount Applied
+    total_discounts_applied = Order.objects.aggregate(Sum('discount_amount'))['discount_amount__sum'] or 0.00
+    
+    # Best Selling Product
+    best_seller = OrderItem.objects.filter(order__status='Completed').values('product__name', 'product__brand').annotate(total_qty=Sum('quantity')).order_by('-total_qty').first()
+    best_selling_product = f"{best_seller['product__brand']} {best_seller['product__name']} ({best_seller['total_qty']} sold)" if best_seller else "No Sales Yet"
+    
+    # Category sales distribution metrics
+    max_qty = max([OrderItem.objects.filter(order__status='Completed', product__category=cat).aggregate(Sum('quantity'))['quantity__sum'] or 0 for cat in categories] + [1])
+    category_sales = []
+    for cat in categories:
+        qty_sold = OrderItem.objects.filter(order__status='Completed', product__category=cat).aggregate(Sum('quantity'))['quantity__sum'] or 0
+        rev = OrderItem.objects.filter(order__status='Completed', product__category=cat).aggregate(total_rev=Sum('price'))['total_rev'] or 0.00
+        percent = (qty_sold / max_qty) * 100
+        category_sales.append({
+            'name': cat.name,
+            'qty_sold': qty_sold,
+            'revenue': rev,
+            'percentage': percent,
+        })
+    category_sales = sorted(category_sales, key=lambda x: x['qty_sold'], reverse=True)
     
     # Low stock items (stock <= 5)
     low_stock_items = Product.objects.filter(stock__lte=5, is_active=True).order_by('stock')
@@ -398,14 +429,74 @@ def dashboard_view(request):
         'categories': categories,
         'users': users,
         'carts': carts,
+        'coupons': coupons,
         'total_revenue': total_revenue,
         'total_orders_count': total_orders_count,
         'pending_orders_count': pending_orders_count,
+        'average_order_value': average_order_value,
+        'total_customers_count': total_customers_count,
+        'total_discounts_applied': total_discounts_applied,
+        'best_selling_product': best_selling_product,
+        'category_sales': category_sales,
         'low_stock_items': low_stock_items,
         'low_stock_count': low_stock_count,
         'active_tab': active_tab
     }
     return render(request, 'core/dashboard.html', context)
+
+
+def restock_product(request, product_id):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+    if request.method == 'POST':
+        product = get_object_or_404(Product, id=product_id)
+        try:
+            qty = int(request.POST.get('quantity', 0))
+            if qty > 0:
+                product.stock += qty
+                product.save()
+                messages.success(request, f"Successfully restocked {qty} units of '{product.name}'. New stock: {product.stock}.")
+            else:
+                messages.error(request, "Restock quantity must be greater than zero.")
+        except ValueError:
+            messages.error(request, "Invalid restock quantity.")
+    return redirect('/dashboard/?tab=overview')
+
+
+def add_coupon(request):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip().upper()
+        discount_percent = request.POST.get('discount_percent')
+        is_active = request.POST.get('is_active') == 'on'
+        
+        if not code or not discount_percent:
+            messages.error(request, "Coupon code and discount percentage are required.")
+        else:
+            try:
+                discount_percent = int(discount_percent)
+                if discount_percent < 0 or discount_percent > 100:
+                    messages.error(request, "Discount percent must be between 0 and 100.")
+                else:
+                    Coupon.objects.create(code=code, discount_percent=discount_percent, is_active=is_active)
+                    messages.success(request, f"Promo code '{code}' created successfully.")
+            except ValueError:
+                messages.error(request, "Invalid discount percentage value.")
+    return redirect('/dashboard/?tab=coupons')
+
+
+def delete_coupon(request, coupon_id):
+    if not is_manager(request.user):
+        messages.error(request, "Access denied.")
+        return redirect('home')
+    coupon = get_object_or_404(Coupon, id=coupon_id)
+    code = coupon.code
+    coupon.delete()
+    messages.success(request, f"Promo code '{code}' deleted successfully.")
+    return redirect('/dashboard/?tab=coupons')
 
 def update_order_status(request, order_id):
     if not is_manager(request.user):
